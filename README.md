@@ -17,14 +17,14 @@ Following steps are strict pre-requisites in Argolis environment before running 
 1. Login to Cloud Shell --> Open Editor --> Open New Terminal
 2. Clone this repo.  Change working directory to this repo's root.
 ```shell
-git clone sso://user/rameshssd/cortex-on-argolis
+git clone https://github.com/ssdramesh/cortex-deployer-scripts
 ```
 ```shell
-cd cortex-on-argolis
+cd cortex-deployer-scripts
 ```
 4. Run required script in Terminal
 ```shell
-sh deployCDF.sh
+sh deployCortexFoundation.sh
 ```
 Total Deployment Time: 120 min.
 

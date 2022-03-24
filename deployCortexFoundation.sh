@@ -26,9 +26,6 @@ PROJECT_NUMBER=$(gcloud projects list --filter="${PROJECT_ID}" --format="value(P
 read -p "Enter google cloud region [default: us-central1]: " REGION
 REGION=${REGION:-us-central1}
 
-read -p "Enter BigQuery region (must match with region entered before) [default: US]: " BQ_REGION
-BQ_REGION=${BQ_REGION:-US}
-
 read -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
 UMSA=${UMSA:-cortex-deployer-sa}
 
@@ -242,13 +239,6 @@ gcloud projects add-iam-policy-binding ${PROJECT_ID} \
     --member=serviceAccount:${UMSA_FQN} \
     --role=roles/composer.worker
 
-# Cloud Composer ServiceAgentV2Ext role for Composer Google Managed Service Agent Account (CGMSAA)
-# CGMSAA_FQN=service-${PROJECT_NUMBER}@cloudcomposer-accounts.iam.gserviceaccount.com
-
-# gcloud projects add-iam-policy-binding ${PROJECT_ID} \
-#     --member=serviceAccount:${CGMSAA_FQN} \
-#     --role roles/composer.ServiceAgentV2Ext
-
 # Permissions for operator to be able to change configuration of Composer 2 environment and such
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
     --member=user:${ADMIN_FQ_UPN} \
@@ -303,7 +293,7 @@ gcloud composer environments create ${COMPOSER_ENV_NM} \
     --async
 
 # Extract the bucket name generated during composer environment creation
-COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe cdf-alpha-cortex  --location=us-central1 --format='value(config.dagGcsPrefix)')
+COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')
 COMPOSER_GEN_BUCKET_NAME=$(echo ${COMPOSER_GEN_BUCKET_FQN} | cut -d'/' -f 3)
 
 # Create a storage bucket for Airflow DAGs
@@ -313,10 +303,10 @@ gsutil mb -l ${REGION} gs://${PROJECT_ID}-dags
 gsutil mb -l ${REGION} gs://${PROJECT_ID}-logs
 
 # Create Cortex Data Foundation Dataset: RAW_LANDING
-bq --location=${BQ_REGION} mk -d ${DS_RAW}
+bq --location=${REGION} mk -d ${DS_RAW}
 
 # Create Cortex Data Foundation Dataset: CDC_PROCESSED
-bq --location=${BQ_REGION} mk -d ${DS_CDC}
+bq --location=${REGION} mk -d ${DS_CDC}
 
 # Clone and run deployment checker
 git clone  https://github.com/fawix/mando-checker
