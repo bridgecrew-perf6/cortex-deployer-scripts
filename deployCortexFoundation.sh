@@ -239,12 +239,12 @@ gcloud projects add-iam-policy-binding ${PROJECT_ID} \
     --member=serviceAccount:${UMSA_FQN} \
     --role=roles/composer.worker
 
-# Permissions for operator to be able to change configuration of Composer 2 environment and such
+# Permissions for operator to be able to change configuration of Composer environment and such
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
     --member=user:${ADMIN_FQ_UPN} \
     --role roles/composer.admin
 
-# Permissions for operator to be able to manage the Composer 2 GCS buckets and environments
+# Permissions for operator to be able to manage the Composer GCS buckets and environments
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
     --member=user:${ADMIN_FQ_UPN} \
     --role roles/composer.environmentAndStorageObjectViewer
@@ -295,6 +295,10 @@ gcloud composer environments create ${COMPOSER_ENV_NM} \
 # Extract the bucket name generated during composer environment creation
 COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')
 COMPOSER_GEN_BUCKET_NAME=$(echo ${COMPOSER_GEN_BUCKET_FQN} | cut -d'/' -f 3)
+echo ${COMPOSER_GEN_BUCKET_NAME}
+if [[ ${COMPOSER_GEN_BUCKET_NAME} -eq '' ]] then
+    exit 1
+fi
 
 # Create a storage bucket for Airflow DAGs
 gsutil mb -l ${REGION} gs://${PROJECT_ID}-dags
@@ -333,26 +337,28 @@ gcloud builds submit --project ${PROJECT_ID} \
     --substitutions \
         _PJID_SRC=${PROJECT_ID},_PJID_TGT=${PROJECT_ID},_DS_CDC=${DS_CDC},_DS_RAW=${DS_RAW},_DS_REPORTING=${DS_REPORTING},_DS_MODELS=${DS_MODELS},_GCS_BUCKET=${PROJECT_ID}-logs,_TGT_BUCKET=${PROJECT_ID}-dags,_TEST_DATA=true,_DEPLOY_CDC=true
 
-while [ $(gcloud builds list --filter 'status=WORKING') -ne '' ]
+OPEN_BUILDS= $(gcloud builds list --filter 'status=WORKING')
+while [ ! -z ${OPEN_BUILDS} ]
 do 
     echo "waiting for cortex-data-foundation build to complete..."
-    sleep 60
+    sleep 5m
+    ${OPEN_BUILDS}=$(gcloud builds list --filter 'status=WORKING')
 done
 
 # Copy files from generation storage bucket to Cloud Composer DAGs bucket folders
 gsutil -m cp -r  gs://${PROJECT_ID}-dags/dags gs://${COMPOSER_GEN_BUCKET_NAME}/dags
-gsutil -m cp -r  gs://${PROJECT_ID}-dags/data gs://${COMPOSER_GEN_BUCKET_NAME}/data/bq_data_replication
+gsutil -m cp -r  gs://${PROJECT_ID}-dags/data gs://${COMPOSER_GEN_BUCKET_NAME}/data
 gsutil -m cp -r  gs://${PROJECT_ID}-dags/hierarchies gs://${COMPOSER_GEN_BUCKET_NAME}/dags/hierarchies/
 
 # Change back to parent / root folder
 cd ${HOME}
 
 # Delete holding bucket
-gsutil rm -r gs://${PROJECT_ID}-dags
+# gsutil rm -r gs://${PROJECT_ID}-dags
 
 # Cleanup clones repo folders
-rm -rf mando-checker
-rm -rf cortex-data-foundation
+# rm -rf mando-checker
+# rm -rf cortex-data-foundation
 
 # Delete service account
-gcloud iam service-accounts delete ${UMSA_FQN}
+# gcloud iam service-accounts delete ${UMSA_FQN}

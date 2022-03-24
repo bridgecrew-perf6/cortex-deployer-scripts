@@ -26,7 +26,7 @@ cd cortex-deployer-scripts
 ```shell
 sh deployCortexFoundation.sh
 ```
-Total Deployment Time: 120 min.
+Total Deployment Time: ~100 min.
 
 ## What will happen?
 1. All required APIs will be enabled

@@ -59,6 +59,10 @@ COMPOSER_ENV_NM=${PROJECT_ID}-cortex
 # Extract the bucket name generated during composer environment creation
 COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')
 COMPOSER_GEN_BUCKET_NAME=$(echo ${COMPOSER_GEN_BUCKET_FQN} | cut -d'/' -f 3)
+echo ${COMPOSER_GEN_BUCKET_NAME}
+if [[ ${COMPOSER_GEN_BUCKET_NAME} -eq '' ]] then
+    exit 1
+fi
 
 # Remove Cloud Composer Instance
 gcloud composer environments delete ${COMPOSER_ENV_NM} --location ${REGION} 
@@ -67,23 +71,163 @@ gcloud composer environments delete ${COMPOSER_ENV_NM} --location ${REGION}
 gsutil rm -r gs://${COMPOSER_GEN_BUCKET_NAME}
 
 # Remove all the persistent disks that were previously used by  the removed cloud composer instance
-
+for ZONE_LONG in $(gcloud compute disks list --format='value(ZONE)' | sort | uniq)
+do
+    ZONE=$(echo ${ZONE_LONG} | cut -d'/' -f 9)
+    gcloud config set compute/zone ${ZONE}
+    gcloud compute disks delete -q $(gcloud compute disks list --filter="zone=${ZONE} AND -users:*" --format "value(name)")
+done
 
 # Restore permissions relaxed for creation of Cloud Composer
+# Enable OS Login
+rm os_login.yaml
 
-# Remove Cloud Storage Buckets
+cat > os_login.yaml << ENDOFFILE
+name: projects/${PROJECT_ID}/policies/compute.requireOsLogin
+spec:
+  rules:
+  - enforce: true
+ENDOFFILE
+
+gcloud org-policies set-policy os_login.yaml 
+
+rm os_login.yaml
+
+# Enable Serial Port Logging
+rm enableSerialPortLogging.yaml
+
+cat > disableSerialPortLogging.yaml << ENDOFFILE
+name: projects/${PROJECT_ID}/policies/compute.disableSerialPortLogging
+spec:
+  rules:
+  - enforce: true
+ENDOFFILE
+
+gcloud org-policies set-policy disableSerialPortLogging.yaml 
+
+rm enableSerialPortLogging.yaml
+
+# Enable Shielded VM requirement
+rm shieldedVm.yaml 
+
+cat > shieldedVm.yaml << ENDOFFILE
+name: projects/${PROJECT_ID}/policies/compute.requireShieldedVm
+spec:
+  rules:
+  - enforce: true
+ENDOFFILE
+
+gcloud org-policies set-policy shieldedVm.yaml 
+
+rm shieldedVm.yaml 
+
+# Enable VM can IP forward requirement
+rm vmCanIpForward.yaml
+
+cat > vmCanIpForward.yaml << ENDOFFILE
+name: projects/${PROJECT_ID}/policies/compute.vmCanIpForward
+spec:
+  rules:
+  - allowAll: false
+ENDOFFILE
+
+gcloud org-policies set-policy vmCanIpForward.yaml
+
+rm vmCanIpForward.yaml
+
+# Disable VM external access
+rm vmExternalIpAccess.yaml
+
+cat > vmExternalIpAccess.yaml << ENDOFFILE
+name: projects/${PROJECT_ID}/policies/compute.vmExternalIpAccess
+spec:
+  rules:
+  - allowAll: false
+ENDOFFILE
+
+gcloud org-policies set-policy vmExternalIpAccess.yaml
+
+rm vmExternalIpAccess.yaml
+
+# Disable restrict VPC peering
+rm restrictVpcPeering.yaml
+
+cat > restrictVpcPeering.yaml << ENDOFFILE
+name: projects/${PROJECT_ID}/policies/compute.restrictVpcPeering
+spec:
+  rules:
+  - allowAll: false
+ENDOFFILE
+
+gcloud org-policies set-policy restrictVpcPeering.yaml
+
+rm restrictVpcPeering.yaml
+
+# Configure ingress settings for Cloud Functions
+rm gcf-ingress-settings.yaml
+
+cat > gcf-ingress-settings.yaml << ENDOFFILE
+name: projects/${PROJECT_ID}/policies/cloudfunctions.allowedIngressSettings
+spec:
+  etag: CO2D6o4GEKDk1wU=
+  rules:
+  - allowAll: false
+ENDOFFILE
+
+gcloud org-policies set-policy gcf-ingress-settings.yaml
+
+rm gcf-ingress-settings.yaml
+
+# Remove other Cloud Storage Buckets created by cloud buils and cortex deployment
+gsutil rm -r gs://${PROJECT_ID}-dags
+gsutil rm -r gs://${PROJECT_ID}-logs
+gsutil rm -r gs://${PROJECT_ID}_cloudbuild
 
 # Remove VPC Network
 read -p "Enter VPC network [default: demo]: " VPC_NM
-VPC_NM="demo"
-VPC_FQN=projects/${PROJECT_ID}/global/networks/$VPC_NM
-SUBNET_NM=${VPC_NM}-subnet
+VPC_NM=${VPC_NM:-demo}
+gcloud compute networks delete ${VPC_NM}
 
-# Remove IAM permissions for Cloud build service account (CBSA)
+# Remove IAM Permissions to CBSA for BigQuery Tasks
+gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
+    --member=serviceAccount:${CBSA_FQN} \
+    --role="roles/bigquery.dataEditor"
+
+gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
+    --member="serviceAccount:${CBSA_FQN}" \
+    --role="roles/bigquery.jobUser"
+
+# Remove IAM permisiions to CBSA for Storage Tasks
+gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
+    --member=serviceAccount:${CBSA_FQN} \
+    --role="roles/storage.objectAdmin"
 
 # Remove User Managed Service Account (UMSA)
 read -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
 UMSA=${UMSA:-cortex-deployer-sa}
 UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
+gcloud iam service-accounts delete ${UMSA_FQN}
 
-# Remove cloned repo folder 
+# Disbale APIs
+gcloud services disable
+    bigquery.googleapis.com \
+    cloudbuild.googleapis.com \
+    composer.googleapis.com \
+    storage-component.googleapis.com \
+    cloudresourcemanager.googleapis.com \
+    orgpolicy.googleapis.com \
+    compute.googleapis.com \
+    monitoring.googleapis.com \
+    cloudtrace.googleapis.com \
+    clouddebugger.googleapis.com
+
+if [[ $? -ne 0 ]] ; then
+    echo "Required APIs could NOT be disabled"
+    exit 1
+else
+    echo "Required APIs disabled successfully"
+fi
+
+# Remove cloned repo folder
+cd ${HOME}
+rm -rf cortex-deployer-scripts
