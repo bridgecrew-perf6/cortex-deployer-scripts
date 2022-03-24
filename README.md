@@ -1,5 +1,5 @@
-# Cortex Deployment on Argolis
-This repository has scripts for deploying Google Cloud Cortex Framework - Data Foundation for SAP in an empty argolis project.
+# Cortex Deployment Scripts
+This repository has scripts for deploying Google Cloud Cortex Framework - Data Foundation for SAP.
 
 Scripts contain commands that are specific to Argolis environments.
 
