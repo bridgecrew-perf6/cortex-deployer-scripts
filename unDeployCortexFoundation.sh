@@ -46,7 +46,7 @@ DS_MODELS=${DS_MODELS:-'MODELS'}
 bq rm -r -f -d ${PROJECT_ID}:${DS_MODELS}
 
 read -p "Enter name of the BQ dataset for reporting views [default: REPORTING]: " DS_REPORTING
-DS_MODELS=${DS_REPORTING:-'REPORTING'}
+DS_REPORTING=${DS_REPORTING:-'REPORTING'}
 bq rm -r -f -d ${PROJECT_ID}:${DS_REPORTING}
 
 read -p "Enter google cloud region used for cortex-deployment[default: us-central1]: " REGION
@@ -59,15 +59,17 @@ COMPOSER_ENV_NM=${PROJECT_ID}-cortex
 # Extract the bucket name generated during composer environment creation
 COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')
 COMPOSER_GEN_BUCKET_NAME=$(echo ${COMPOSER_GEN_BUCKET_FQN} | cut -d'/' -f 3)
-echo ${COMPOSER_GEN_BUCKET_NAME}
-if [[ ${COMPOSER_GEN_BUCKET_NAME} -eq '' ]] then
+if [[ -z ${COMPOSER_GEN_BUCKET_NAME} ]] ; then
+    echo 'Could not extract Cloud Composer bucket location for environment: '${COMPOSER_ENV_NM}    
     exit 1
 fi
 
 # Remove Cloud Composer Instance
-gcloud composer environments delete ${COMPOSER_ENV_NM} --location ${REGION} 
+echo 'Removing Cloud Composer installation: '${COMPOSER_ENV_NM}
+gcloud composer environments delete -q ${COMPOSER_ENV_NM} --location ${REGION} 
 
 # Remove bucket created by the Cloud Composer Instance
+echo 'Removing bucket created by Cloud Composer installation: '${COMPOSER_GEN_BUCKET_NAME}
 gsutil rm -r gs://${COMPOSER_GEN_BUCKET_NAME}
 
 # Remove all the persistent disks that were previously used by  the removed cloud composer instance
@@ -75,6 +77,7 @@ for ZONE_LONG in $(gcloud compute disks list --format='value(ZONE)' | sort | uni
 do
     ZONE=$(echo ${ZONE_LONG} | cut -d'/' -f 9)
     gcloud config set compute/zone ${ZONE}
+    echo 'Removing disks left by Cloud Composer installation: '${COMPOSER_ENV_NM}
     gcloud compute disks delete -q $(gcloud compute disks list --filter="zone=${ZONE} AND -users:*" --format "value(name)")
 done
 
@@ -202,14 +205,25 @@ gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
     --member=serviceAccount:${CBSA_FQN} \
     --role="roles/storage.objectAdmin"
 
+# Grant logged in user permission to remove service accounts
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member=${ADMIN_FQ_UPN}
+    --role:"roles/iam.serviceAccountKeyAdmin"
+
 # Remove User Managed Service Account (UMSA)
 read -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
 UMSA=${UMSA:-cortex-deployer-sa}
 UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
-gcloud iam service-accounts delete ${UMSA_FQN}
+gcloud auth revoke ${UMSA_FQN}
+gcloud iam service-accounts delete -q ${UMSA_FQN}
+
+# Revoke logged in user permission to remove service accounts
+gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
+    --member=${ADMIN_FQ_UPN}
+    --role:"roles/iam.serviceAccountKeyAdmin"
 
 # Disbale APIs
-gcloud services disable
+gcloud services disable --force \
     bigquery.googleapis.com \
     cloudbuild.googleapis.com \
     composer.googleapis.com \
