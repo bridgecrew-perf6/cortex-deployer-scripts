@@ -39,15 +39,3 @@ Total Deployment Time: 120 min.
 8. Mando Checker will be run  <--Can be removed
 9. Cortex Deployment will be run with test harness and CDC DAG creation
 10. DAGs will be copied to composer Composer buckets <--Separate script
-
-## Reuse for Dasher (DevRel)
-Could potentially be reused.  This is yet to be tested.  
-
-## Notes:
-- ```deploCDF.sh``` script to be split into exercises for Cortex Tech Workshop (DevRel) version
-
-## TODOs:
-Split composer copy
-Clean repos
-Clean and delete buckets
-Delete SA?
