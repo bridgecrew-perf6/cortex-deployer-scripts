@@ -67,21 +67,21 @@ else
 fi
 
 # Create VPC
-gcloud compute networks create ${VPC_NM} \
+gcloud compute networks create -q ${VPC_NM} \
     --project=${PROJECT_ID} \
     --subnet-mode=custom \
     --mtu=1460 \
     --bgp-routing-mode=regional
 
 # Create custom subnet
-gcloud compute networks subnets create ${SUBNET_NM} \
+gcloud compute networks subnets create -q ${SUBNET_NM} \
     --project=${PROJECT_ID} \
     --network=${VPC_NM} \
     --range=10.0.0.0/24 \
     --region=${REGION}
 
 # Create firewall: Intra-VPC allow all communication
-gcloud compute firewall-rules create ${VPC_NM}-allow-all-intra-vpc \
+gcloud compute firewall-rules create -q allow-all-intra-vpc \
     --project=${PROJECT_ID} \
     --network=${VPC_FQN} \
     --description="Allows\ connection\ from\ any\ source\ to\ any\ instance\ on\ the\ network\ using\ custom\ protocols." \
@@ -92,7 +92,7 @@ gcloud compute firewall-rules create ${VPC_NM}-allow-all-intra-vpc \
     --rules=all
 
 # Create firewall: Allow SSH
-gcloud compute firewall-rules create allow-all-ssh \
+gcloud compute firewall-rules create -q allow-all-ssh \
     --project=$PROJECT_ID \
     --network=$VPC_FQN \
     --description="Allows\ TCP\ connections\ from\ any\ source\ to\ any\ instance\ on\ the\ network\ using\ port\ 22." \
