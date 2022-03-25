@@ -204,82 +204,82 @@ gcloud org-policies set-policy gcf-ingress-settings.yaml
 rm gcf-ingress-settings.yaml
 
 # Create a user managed service account
-gcloud iam service-accounts create ${UMSA} \
+gcloud iam service-accounts create -q ${UMSA} \
     --description="User Managed Service Account for Cortex Deployment" \
     --display-name=$UMSA 
 
 # Grant General IAM Permissions
 # UMSA: Service Account User role for UMSA
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member=serviceAccount:${UMSA_FQN} \
     --role=roles/iam.serviceAccountUser   
 
 # UMSA: Service Account Token Creator role for UMSA
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member=serviceAccount:${UMSA_FQN} \
     --role=roles/iam.serviceAccountTokenCreator  
 
 # Permission for user to operate as UMSA
-gcloud iam service-accounts add-iam-policy-binding ${UMSA_FQN} \
+gcloud iam service-accounts add-iam-policy-binding -q ${UMSA_FQN} \
     --member="user:${ADMIN_FQ_UPN}" \
     --role="roles/iam.serviceAccountUser"
 
-gcloud iam service-accounts add-iam-policy-binding ${UMSA_FQN} \
+gcloud iam service-accounts add-iam-policy-binding -q ${UMSA_FQN} \
     --member="user:${ADMIN_FQ_UPN}" \
     --role="roles/iam.serviceAccountTokenCreator"
 
 # Grant General IAM Permissions specific for Cloud Composer
 # Composer Administrator for UMSA
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member=serviceAccount:${UMSA_FQN} \
     --role=roles/composer.admin
 
 # Composer worker for UMSA
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member=serviceAccount:${UMSA_FQN} \
     --role=roles/composer.worker
 
 # Permissions for operator to be able to change configuration of Composer environment and such
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member=user:${ADMIN_FQ_UPN} \
     --role roles/composer.admin
 
 # Permissions for operator to be able to manage the Composer GCS buckets and environments
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member=user:${ADMIN_FQ_UPN} \
     --role roles/composer.environmentAndStorageObjectViewer
 
 # Grant IAM Permissions specific to Cloud Storage
 # Permissions for UMSA to read from GCS
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member=serviceAccount:${UMSA_FQN} \
     --role="roles/storage.objectViewer"
 
 # Grant IAM Permissions to UMSA for BigQuery Tasks
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member=serviceAccount:${UMSA_FQN} \
     --role="roles/bigquery.admin"
 
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member=serviceAccount:${UMSA_FQN} \
     --role="roles/bigquery.dataEditor"
 
 # Grant IAM Permissions to CBSA for BigQuery Tasks
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member=serviceAccount:${CBSA_FQN} \
     --role="roles/bigquery.dataEditor"
 
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member="serviceAccount:${CBSA_FQN}" \
     --role="roles/bigquery.jobUser"
 
 # Grant IAM permisiions to CBSA for Storage Tasks
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member=serviceAccount:${CBSA_FQN} \
     --role="roles/storage.objectAdmin"
 
 # Grant permissions to service account to run cloud build
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member="serviceAccount:${UMSA_FQN}" \
     --role="roles/cloudbuild.builds.editor"    
 
@@ -296,7 +296,7 @@ gcloud composer environments create ${COMPOSER_ENV_NM} \
 COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')
 COMPOSER_GEN_BUCKET_NAME=$(echo ${COMPOSER_GEN_BUCKET_FQN} | cut -d'/' -f 3)
 echo ${COMPOSER_GEN_BUCKET_NAME}
-if [[ ${COMPOSER_GEN_BUCKET_NAME} -eq '' ]] then
+if [[ ${COMPOSER_GEN_BUCKET_NAME} -eq '' ]] ; then
     exit 1
 fi
 

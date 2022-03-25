@@ -218,9 +218,9 @@ gcloud auth revoke ${UMSA_FQN}
 gcloud iam service-accounts delete -q ${UMSA_FQN}
 
 # Revoke logged in user permission to remove service accounts
-gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
-    --member=${ADMIN_FQ_UPN}
-    --role:"roles/iam.serviceAccountKeyAdmin"
+# gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
+#     --member=${ADMIN_FQ_UPN}
+#     --role:"roles/iam.serviceAccountKeyAdmin"
 
 # Disbale APIs
 gcloud services disable --force \
