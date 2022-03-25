@@ -346,9 +346,17 @@ do
 done
 
 # Copy files from generation storage bucket to Cloud Composer DAGs bucket folders
-gsutil -m cp -r  gs://${PROJECT_ID}-dags/dags gs://${COMPOSER_GEN_BUCKET_NAME}/dags
-gsutil -m cp -r  gs://${PROJECT_ID}-dags/data gs://${COMPOSER_GEN_BUCKET_NAME}/data
-gsutil -m cp -r  gs://${PROJECT_ID}-dags/hierarchies gs://${COMPOSER_GEN_BUCKET_NAME}/dags/hierarchies/
+SRC_DAGS_BUCKET=$(echo gs://${PROJECT_ID}-dags/dags)
+TGT_DAGS_BUCKET=$(echo gs://${COMPOSER_GEN_BUCKET_NAME}/dags)
+gsutil -m cp -r  ${SRC_DAGS_BUCKET} ${TGT_DAGS_BUCKET}
+
+SRC_DATA_BUCKET=$(echo gs://${PROJECT_ID}-dags/data)
+TGT_DATA_BUCKET=$(echo gs://${COMPOSER_GEN_BUCKET_NAME}/data)
+gsutil -m cp -r  ${SRC_DATA_BUCKET} ${TGT_DATA_BUCKET} 
+
+SRC_HIER_BUCKET=$(echo gs://${PROJECT_ID}-dags/hierarchies)
+TGT_HIER_BUCKET=$(echo gs://${COMPOSER_GEN_BUCKET_NAME}/dags/hierarchies/)
+gsutil -m cp -r  ${SRC_HIER_BUCKET} ${TGT_HIER_BUCKET} 
 
 # Change back to parent / root folder
 cd ${HOME}
