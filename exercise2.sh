@@ -75,7 +75,17 @@ bq --location=${REGION} mk -d ${DS_MODELS}
 
 read -p "Enter name of the BQ dataset for reporting views [default: REPORTING]: " DS_REPORTING
 DS_REPORTING=${DS_REPORTING:-'REPORTING'}
-bq --location=${REGION} mk -d ${DS_REPORTITNG}
+bq --location=${REGION} mk -d ${DS_REPORTING}
+
+# Create a storage bucket for Airflow DAGs
+read -p "Enter name of the GCS Bucket for Airflow DAGs [default: ${PROJECT_ID}-dags]: " DAGS_BUCKET
+DAGS_BUCKET=${DAGS_BUCKET:-$(echo {PROJECT_ID}-dags)}
+echo '\nCreating GCS bucket for Airflow DAGs that will be generated during later deployment of cortex data foundation...\n'
+gsutil mb -l ${REGION} gs://${DAGS_BUCKET}
+
+# Create a storage bucket for logs
+# echo '\nCreating GCS bucket for cortex data foundation deployment logs...\n'
+# gsutil mb -l ${REGION} gs://${PROJECT_ID}-logs
 
 HOME=$(pwd)
 

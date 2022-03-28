@@ -298,17 +298,27 @@ if [[ ${COMPOSER_GEN_BUCKET_NAME} -eq '' ]] ; then
     exit 1
 fi
 
+read -p "Enter name of the BQ dataset for landing raw data [default: RAW_LANDING]: " DS_RAW
+DS_RAW=${DS_RAW:-RAW_LANDING}
+bq --location=${REGION} mk -d ${DS_RAW}
+
+read -p "Enter name of the BQ dataset for changed data processing [default: CDC_PROCESSED]: " DS_CDC
+DS_CDC=${DS_CDC:-CDC_PROCESSED}
+bq --location=${REGION} mk -d ${DS_CDC}
+
+read -p "Enter name of the BQ dataset for ML models [default: MODELS]: " DS_MODELS
+DS_MODELS=${DS_MODELS:-'MODELS'}
+bq --location=${REGION} mk -d ${DS_MODELS}
+
+read -p "Enter name of the BQ dataset for reporting views [default: REPORTING]: " DS_REPORTING
+DS_REPORTING=${DS_REPORTING:-'REPORTING'}
+bq --location=${REGION} mk -d ${DS_REPORTING}
+
 # Create a storage bucket for Airflow DAGs
 gsutil mb -l ${REGION} gs://${PROJECT_ID}-dags
 
 # Create a storage bucket for logs
 gsutil mb -l ${REGION} gs://${PROJECT_ID}-logs
-
-# Create Cortex Data Foundation Dataset: RAW_LANDING
-bq --location=${REGION} mk -d ${DS_RAW}
-
-# Create Cortex Data Foundation Dataset: CDC_PROCESSED
-bq --location=${REGION} mk -d ${DS_CDC}
 
 # Clone and run deployment checker
 git clone  https://github.com/fawix/mando-checker
