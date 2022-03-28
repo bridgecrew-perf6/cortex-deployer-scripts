@@ -34,7 +34,7 @@ HOME=$(dirname $(pwd))
 
 # Enable required APIs
 gcloud services enable \
-    bigquery.googleapis.com \
+    bigquery.googleapis.com
 
 if [[ $? -ne 0 ]] ; then
     echo "Required APIs could NOT be enabled"
@@ -61,7 +61,7 @@ gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member="serviceAccount:${CBSA_FQN}" \
     --role="roles/bigquery.jobUser"
 
-# Grant IAM permisiions to CBSA for Storage Tasks
+# Grant IAM permisions to CBSA for Storage Tasks
 gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member=serviceAccount:${CBSA_FQN} \
     --role="roles/storage.objectAdmin"
@@ -90,7 +90,7 @@ gsutil mb -l ${REGION} gs://${DAGS_BUCKET}
 
 # Create a storage bucket for logs
 read -e -i ${PROJECT_ID}-logs -p "Enter name of the GCS Bucket for Cortex deployment logs [default: ${PROJECT_ID}-logs]: " LOGS_BUCKET
-echo 'Creating GCS bucket for cortex data foundation deployment logs...\n'
+echo 'Creating GCS bucket for cortex data foundation deployment logs...'
 gsutil mb -l ${REGION} gs://${LOGS_BUCKET}
 
 # Change to parent / root folder

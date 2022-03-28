@@ -22,8 +22,8 @@ gcloud config set project ${PROJECT_ID}
 PROJECT_NUMBER=$(gcloud projects list --filter="${PROJECT_ID}" --format="value(PROJECT_NUMBER)")
 
 read -e -i "us-central1" -p "Enter google cloud region [default: us-central1]: " REGION
-read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
-read -e -i "demo" -p "Enter VPC name for deployment [default: demo]" VPC_NM
+read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-deployer-sa]: " UMSA
+read -e -i "demo" -p "Enter VPC name for deployment [default: demo]: " VPC_NM
 read -e -i ${PROJECT_ID}-cortex -p "Enter Cloud Composer environment name [default: ${PROJECT_ID}-cortex]" COMPOSER_ENV_NM
 
 UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com

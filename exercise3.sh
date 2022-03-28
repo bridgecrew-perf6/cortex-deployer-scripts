@@ -71,6 +71,3 @@ rm -rf cortex-data-foundation
 
 # Delete holding bucket
 gsutil rm -r gs://${PROJECT_ID}-dags
-
-# Delete service account
-gcloud iam service-accounts delete ${UMSA_FQN}
