@@ -21,11 +21,8 @@ gcloud config set project ${PROJECT_ID}
 # Variables
 PROJECT_NUMBER=$(gcloud projects list --filter="${PROJECT_ID}" --format="value(PROJECT_NUMBER)")
 
-read -p "Enter google cloud region [default: us-central1]: " REGION
-REGION=${REGION:-us-central1}
-
-read -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
-UMSA=${UMSA:-cortex-deployer-sa}
+read -e -i "us-central1" -p "Enter google cloud region [default: us-central1]: " REGION
+read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
 
 UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
 CBSA_FQN=${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com
@@ -37,7 +34,8 @@ SUBNET_NM=${VPC_NM}-subnet
 
 COMPOSER_ENV_NM=$PROJECT_ID-cortex
 
-HOME=$(pwd)
+# Change to user root for cloning new repos
+HOME=$(dirname $(pwd))
 
 # Enable required APIs
 gcloud services enable \
@@ -177,21 +175,6 @@ gcloud org-policies set-policy restrictVpcPeering.yaml
 
 rm restrictVpcPeering.yaml
 
-# Argolis Specific: Configure ingress settings for Cloud Functions
-rm gcf-ingress-settings.yaml
-
-cat > gcf-ingress-settings.yaml << ENDOFFILE
-name: projects/${PROJECT_ID}/policies/cloudfunctions.allowedIngressSettings
-spec:
-  etag: CO2D6o4GEKDk1wU=
-  rules:
-  - allowAll: true
-ENDOFFILE
-
-gcloud org-policies set-policy gcf-ingress-settings.yaml
-
-rm gcf-ingress-settings.yaml
-
 # Create a user managed service account
 gcloud iam service-accounts create -q ${UMSA} \
     --description="User Managed Service Account for Cortex Deployment" \
@@ -250,7 +233,7 @@ gcloud composer environments create ${COMPOSER_ENV_NM} \
     --labels env=dev,purpose=cortex-data-foundation \
     --network ${VPC_NM} \
     --subnetwork ${SUBNET_NM} \
-    --service-account ${UMSA_FQN} \
+    --service-account ${UMSA_FQN}
 
 echo "\nSuccessfully triggered deployment of new cloud composer environment. Please cehck environment creation logs \n"
 exit 0

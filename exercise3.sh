@@ -21,15 +21,6 @@ ADMIN_FQ_UPN=$(gcloud auth list --filter=status:ACTIVE --format="value(account)"
 # Change to user root for cloning new repos
 HOME=$(dirname $(pwd))
 
-# Extract the bucket name generated during composer environment creation
-COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')
-COMPOSER_GEN_BUCKET_NAME=$(echo ${COMPOSER_GEN_BUCKET_FQN} | cut -d'/' -f 3)
-echo ${COMPOSER_GEN_BUCKET_NAME}
-if [ -z ${COMPOSER_GEN_BUCKET_NAME} ] ; then
-    echo "Cannot find DAGs bucket for the new composer environment. Please cehck environment creation logs"
-    exit 1
-fi
-
 cd ${HOME}
 # Clone the Open Source Git Repo from Github
 git clone --recurse-submodules https://github.com/GoogleCloudPlatform/cortex-data-foundation
@@ -50,17 +41,26 @@ do
     ${OPEN_BUILDS}=$(gcloud builds list --filter 'status=WORKING')
 done
 
+# Extract the bucket name generated during composer environment creation
+COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')
+COMPOSER_GEN_BUCKET_NAME=$(echo ${COMPOSER_GEN_BUCKET_FQN} | cut -d'/' -f 3)
+echo ${COMPOSER_GEN_BUCKET_NAME}
+if [ -z ${COMPOSER_GEN_BUCKET_NAME} ] ; then
+    echo "Cannot find DAGs bucket for the new composer environment. Please cehck environment creation logs"
+    exit 1
+fi
+
 # Copy files from generation storage bucket to Cloud Composer DAGs bucket folders
 SRC_DAGS_BUCKET=$(echo gs://${PROJECT_ID}-dags/dags)
-TGT_DAGS_BUCKET=$(echo gs://${COMPOSER_GEN_BUCKET_NAME}/dags)
+TGT_DAGS_BUCKET=$(echo gs://${COMPOSER_GEN_BUCKET_NAME})
 gsutil -m cp -r  ${SRC_DAGS_BUCKET} ${TGT_DAGS_BUCKET}
 
 SRC_DATA_BUCKET=$(echo gs://${PROJECT_ID}-dags/data)
-TGT_DATA_BUCKET=$(echo gs://${COMPOSER_GEN_BUCKET_NAME}/data)
+TGT_DATA_BUCKET=$(echo gs://${COMPOSER_GEN_BUCKET_NAME})
 gsutil -m cp -r  ${SRC_DATA_BUCKET} ${TGT_DATA_BUCKET} 
 
 SRC_HIER_BUCKET=$(echo gs://${PROJECT_ID}-dags/hierarchies)
-TGT_HIER_BUCKET=$(echo gs://${COMPOSER_GEN_BUCKET_NAME}/dags/hierarchies/)
+TGT_HIER_BUCKET=$(echo gs://${COMPOSER_GEN_BUCKET_NAME}/dags)
 gsutil -m cp -r  ${SRC_HIER_BUCKET} ${TGT_HIER_BUCKET} 
 
 # Change back to parent / root folder
@@ -70,7 +70,7 @@ cd ${HOME}
 rm -rf cortex-data-foundation
 
 # Delete holding bucket
-# gsutil rm -r gs://${PROJECT_ID}-dags
+gsutil rm -r gs://${PROJECT_ID}-dags
 
 # Delete service account
-# gcloud iam service-accounts delete ${UMSA_FQN}
+gcloud iam service-accounts delete ${UMSA_FQN}
