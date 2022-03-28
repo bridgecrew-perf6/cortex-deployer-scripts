@@ -10,8 +10,8 @@ read -e -i ${PROJECT_ID}-dags -p "Enter name of the GCS Bucket for Airflow DAGs 
 read -e -i ${PROJECT_ID}-logs -p "Enter name of the GCS Bucket for Cortex deployment logs [default: ${PROJECT_ID}-logs]: " LOGS_BUCKET
 
 read -e -i "us-central1" -p "Enter google cloud region [default: us-central1]: " REGION
-read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
-read -e -i $PROJECT_ID-cortex -p "Enter the name of the cloud composer environment for Airflo DAGs deployment" COMPOSER_ENV_NM
+read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-deployer-sa]: " UMSA
+read -e -i ${PROJECT_ID}-cortex -p "Enter the name of the cloud composer environment for Airflow DAGs deployment: [default: ${PROJECT_ID}-cortex]: " COMPOSER_ENV_NM
 
 UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
 #  Check if the following are used?
@@ -24,7 +24,7 @@ HOME=$(pwd)
 COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')
 COMPOSER_GEN_BUCKET_NAME=$(echo ${COMPOSER_GEN_BUCKET_FQN} | cut -d'/' -f 3)
 echo ${COMPOSER_GEN_BUCKET_NAME}
-if [[ ${COMPOSER_GEN_BUCKET_NAME} -eq '' ]] ; then
+if [ -z ${COMPOSER_GEN_BUCKET_NAME} ] ; then
     echo "\nCannot find DAGs bucket for the new composer environment. Please cehck environment creation logs \n"
     exit 1
 fi
