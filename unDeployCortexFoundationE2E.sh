@@ -33,33 +33,24 @@ DS_REPORTING=REPORTING
 HOME=$(pwd)
 
 # Remove BigQuery Datasets
-read -p "Enter name of the BQ dataset for landing raw data [default: RAW_LANDING]: " DS_RAW
-DS_RAW=${DS_RAW:-'RAW_LANDING'}
+read -e -i "RAW_LANDING" -p "Enter name of the BQ dataset for landing raw data [default: RAW_LANDING]: " DS_RAW
 bq rm -r -f -d ${PROJECT_ID}:${DS_RAW}
 
-read -p "Enter name of the BQ dataset for changed data processing [default: CDC_PROCESSED]: " DS_CDC
-DS_CDC=${DS_CDC:-'CDC_PROCESSED'}
+read -e -i "CDC_PROCESSED" -p "Enter name of the BQ dataset for changed data processing [default: CDC_PROCESSED]: " DS_CDC
 bq rm -r -f -d ${PROJECT_ID}:${DS_CDC}
 
-read -p "Enter name of the BQ dataset for ML models [default: MODELS]: " DS_MODELS
-DS_MODELS=${DS_MODELS:-'MODELS'}
+read -e -i "MODELS" -p "Enter name of the BQ dataset for ML models [default: MODELS]: " DS_MODELS
 bq rm -r -f -d ${PROJECT_ID}:${DS_MODELS}
 
-read -p "Enter name of the BQ dataset for reporting views [default: REPORTING]: " DS_REPORTING
-DS_REPORTING=${DS_REPORTING:-'REPORTING'}
+read -e -i "REPORTING" -p "Enter name of the BQ dataset for reporting views [default: REPORTING]: " DS_REPORTING
 bq rm -r -f -d ${PROJECT_ID}:${DS_REPORTING}
 
-read -p "Enter google cloud region used for cortex-deployment[default: us-central1]: " REGION
-REGION=${REGION:-us-central1}
+read -e -i "us-central1" -p "Enter google cloud region used for cortex-deployment[default: us-central1]: " REGION
 
 # Prepare to delete cloud composer instance
 read -e -i ${PROJECT_ID}-cortex -p "Enter Cloud Composer environment name [default: ${PROJECT_ID}-cortex]" COMPOSER_ENV_NM
 
-# Remove Cloud Composer Instance
-echo 'Removing Cloud Composer installation: '${COMPOSER_ENV_NM}
-gcloud composer environments delete -q ${COMPOSER_ENV_NM} --location ${REGION} 
-
-# Extract the bucket name generated during composer environment creation
+# Extract the bucket name generated during composer environment creation BEFORE deleting it!
 COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')
 COMPOSER_GEN_BUCKET_NAME=$(echo ${COMPOSER_GEN_BUCKET_FQN} | cut -d'/' -f 3)
 if [[ -z ${COMPOSER_GEN_BUCKET_NAME} ]] ; then
@@ -67,6 +58,10 @@ if [[ -z ${COMPOSER_GEN_BUCKET_NAME} ]] ; then
     echo 'Please check Cloud Composer environment creation logs'
     exit 1
 fi
+
+# Remove Cloud Composer Instance
+echo 'Removing Cloud Composer installation: '${COMPOSER_ENV_NM}
+gcloud composer environments delete -q ${COMPOSER_ENV_NM} --location ${REGION} 
 
 # Remove bucket created by the Cloud Composer Instance
 echo 'Removing bucket created by Cloud Composer installation: '${COMPOSER_GEN_BUCKET_NAME}
