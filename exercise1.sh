@@ -23,16 +23,14 @@ PROJECT_NUMBER=$(gcloud projects list --filter="${PROJECT_ID}" --format="value(P
 
 read -e -i "us-central1" -p "Enter google cloud region [default: us-central1]: " REGION
 read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
+read -e -i "demo" -p "Enter VPC name for deployment [default: demo]" VPC_NM
+read -e -i ${PROJECT_ID}-cortex -p "Enter Cloud Composer environment name [default: ${PROJECT_ID}-cortex]" COMPOSER_ENV_NM
 
 UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
 CBSA_FQN=${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com
 ADMIN_FQ_UPN=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
-
-VPC_NM="demo"
 VPC_FQN=projects/${PROJECT_ID}/global/networks/$VPC_NM
 SUBNET_NM=${VPC_NM}-subnet
-
-COMPOSER_ENV_NM=$PROJECT_ID-cortex
 
 # Change to user root for cloning new repos
 HOME=$(dirname $(pwd))

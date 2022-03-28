@@ -53,21 +53,20 @@ read -p "Enter google cloud region used for cortex-deployment[default: us-centra
 REGION=${REGION:-us-central1}
 
 # Prepare to delete cloud composer instance
-read -p "Enter Cloud Composer Environment Name [default: ${PROJECT_ID}-cortex]: " VPC_NM
-COMPOSER_ENV_NM=${PROJECT_ID}-cortex
+read -e -i ${PROJECT_ID}-cortex -p "Enter Cloud Composer environment name [default: ${PROJECT_ID}-cortex]" COMPOSER_ENV_NM
+
+# Remove Cloud Composer Instance
+echo 'Removing Cloud Composer installation: '${COMPOSER_ENV_NM}
+gcloud composer environments delete -q ${COMPOSER_ENV_NM} --location ${REGION} 
 
 # Extract the bucket name generated during composer environment creation
 COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')
 COMPOSER_GEN_BUCKET_NAME=$(echo ${COMPOSER_GEN_BUCKET_FQN} | cut -d'/' -f 3)
 if [[ -z ${COMPOSER_GEN_BUCKET_NAME} ]] ; then
-    echo '\nCould not extract Cloud Composer bucket location for environment: '${COMPOSER_ENV_NM} 
-    echo  '\n Please check Cloud Composer environment creation logs'
+    echo 'Could not extract Cloud Composer bucket location for environment: '${COMPOSER_ENV_NM} 
+    echo 'Please check Cloud Composer environment creation logs'
     exit 1
 fi
-
-# Remove Cloud Composer Instance
-echo 'Removing Cloud Composer installation: '${COMPOSER_ENV_NM}
-gcloud composer environments delete -q ${COMPOSER_ENV_NM} --location ${REGION} 
 
 # Remove bucket created by the Cloud Composer Instance
 echo 'Removing bucket created by Cloud Composer installation: '${COMPOSER_GEN_BUCKET_NAME}
@@ -188,8 +187,7 @@ gsutil rm -r gs://${PROJECT_ID}-logs
 gsutil rm -r gs://${PROJECT_ID}_cloudbuild
 
 # Remove VPC Network
-read -p "Enter VPC network [default: demo]: " VPC_NM
-VPC_NM=${VPC_NM:-demo}
+read -e -i "demo" -p "Enter VPC network [default: demo]: " VPC_NM
 gcloud compute networks delete ${VPC_NM}
 
 # Remove IAM Permissions to CBSA for BigQuery Tasks
@@ -219,9 +217,9 @@ gcloud auth revoke ${UMSA_FQN}
 gcloud iam service-accounts delete -q ${UMSA_FQN}
 
 # Revoke logged in user permission to remove service accounts
-# gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
-#     --member=${ADMIN_FQ_UPN}
-#     --role:"roles/iam.serviceAccountKeyAdmin"
+gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
+    --member=${ADMIN_FQ_UPN}
+    --role:"roles/iam.serviceAccountKeyAdmin"
 
 # Disbale APIs
 gcloud services disable --force \

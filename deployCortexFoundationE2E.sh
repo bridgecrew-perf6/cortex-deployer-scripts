@@ -41,7 +41,7 @@ DS_CDC=CDC_PROCESSED
 DS_MODELS=MODELS
 DS_REPORTING=REPORTING
 
-HOME=$(pwd)
+HOME=$(dirname $(pwd))
 
 # Enable required APIs
 gcloud services enable \
@@ -182,21 +182,6 @@ ENDOFFILE
 gcloud org-policies set-policy restrictVpcPeering.yaml
 
 rm restrictVpcPeering.yaml
-
-# Argolis Specific: Configure ingress settings for Cloud Functions
-rm gcf-ingress-settings.yaml
-
-cat > gcf-ingress-settings.yaml << ENDOFFILE
-name: projects/${PROJECT_ID}/policies/cloudfunctions.allowedIngressSettings
-spec:
-  etag: CO2D6o4GEKDk1wU=
-  rules:
-  - allowAll: true
-ENDOFFILE
-
-gcloud org-policies set-policy gcf-ingress-settings.yaml
-
-rm gcf-ingress-settings.yaml
 
 # Create a user managed service account
 gcloud iam service-accounts create -q ${UMSA} \
@@ -366,15 +351,12 @@ SRC_HIER_BUCKET=$(echo gs://${PROJECT_ID}-dags/hierarchies)
 TGT_HIER_BUCKET=$(echo gs://${COMPOSER_GEN_BUCKET_NAME}/dags/hierarchies/)
 gsutil -m cp -r  ${SRC_HIER_BUCKET} ${TGT_HIER_BUCKET} 
 
+# Delete holding bucket
+gsutil rm -r gs://${PROJECT_ID}-dags
+
 # Change back to parent / root folder
 cd ${HOME}
 
-# Delete holding bucket
-# gsutil rm -r gs://${PROJECT_ID}-dags
-
 # Cleanup clones repo folders
-# rm -rf mando-checker
-# rm -rf cortex-data-foundation
-
-# Delete service account
-# gcloud iam service-accounts delete ${UMSA_FQN}
+rm -rf mando-checker
+rm -rf cortex-data-foundation
