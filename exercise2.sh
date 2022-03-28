@@ -23,11 +23,8 @@ gcloud config set project ${PROJECT_ID}
 # Variables
 PROJECT_NUMBER=$(gcloud projects list --filter="${PROJECT_ID}" --format="value(PROJECT_NUMBER)")
 
-read -p "Enter google cloud region [default: us-central1]: " REGION
-REGION=${REGION:-us-central1}
-
-read -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
-UMSA=${UMSA:-cortex-deployer-sa}
+read -e -i "us-central1" -p "Enter google cloud region [default: us-central1]: " REGION
+read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
 
 UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
 CBSA_FQN=${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com
@@ -61,31 +58,28 @@ gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member="serviceAccount:${UMSA_FQN}" \
     --role="roles/cloudbuild.builds.editor"  
 
-read -p "Enter name of the BQ dataset for landing raw data [default: RAW_LANDING]: " DS_RAW
-DS_RAW=${DS_RAW:-RAW_LANDING}
+read -e -i "RAW_LANDING" -p "Enter name of the BQ dataset for landing raw data [default: RAW_LANDING]: " DS_RAW
 bq --location=${REGION} mk -d ${DS_RAW}
 
-read -p "Enter name of the BQ dataset for changed data processing [default: CDC_PROCESSED]: " DS_CDC
-DS_CDC=${DS_CDC:-CDC_PROCESSED}
+read -e -i "CDC_PROCESSED" -p "Enter name of the BQ dataset for changed data processing [default: CDC_PROCESSED]: " DS_CDC
 bq --location=${REGION} mk -d ${DS_CDC}
 
-read -p "Enter name of the BQ dataset for ML models [default: MODELS]: " DS_MODELS
-DS_MODELS=${DS_MODELS:-'MODELS'}
+read -e -i "MODELS" -p "Enter name of the BQ dataset for ML models [default: MODELS]: " DS_MODELS
 bq --location=${REGION} mk -d ${DS_MODELS}
 
-read -p "Enter name of the BQ dataset for reporting views [default: REPORTING]: " DS_REPORTING
-DS_REPORTING=${DS_REPORTING:-'REPORTING'}
+read -e -i "REPORTING" -p "Enter name of the BQ dataset for reporting views [default: REPORTING]: " DS_REPORTING
 bq --location=${REGION} mk -d ${DS_REPORTING}
 
 # Create a storage bucket for Airflow DAGs
-read -p "Enter name of the GCS Bucket for Airflow DAGs [default: ${PROJECT_ID}-dags]: " DAGS_BUCKET
-DAGS_BUCKET=${DAGS_BUCKET:-$(echo {PROJECT_ID}-dags)}
-echo '\nCreating GCS bucket for Airflow DAGs that will be generated during later deployment of cortex data foundation...\n'
+# Create a storage bucket for Airflow DAGs
+read -e -i ${PROJECT_ID}-dags -p "Enter name of the GCS Bucket for Airflow DAGs [default: ${PROJECT_ID}-dags]: " DAGS_BUCKET
+echo 'Creating GCS bucket for Airflow DAGs...'${DAGS_BUCKET}
 gsutil mb -l ${REGION} gs://${DAGS_BUCKET}
 
 # Create a storage bucket for logs
-# echo '\nCreating GCS bucket for cortex data foundation deployment logs...\n'
-# gsutil mb -l ${REGION} gs://${PROJECT_ID}-logs
+read -e -i ${PROJECT_ID}-logs -p "Enter name of the GCS Bucket for Cortex deployment logs [default: ${PROJECT_ID}-logs]: " LOGS_BUCKET
+echo 'Creating GCS bucket for cortex data foundation deployment logs...\n'
+gsutil mb -l ${REGION} gs://${LOGS_BUCKET}
 
 HOME=$(pwd)
 
@@ -109,7 +103,7 @@ cd mando-checker
 # Run the deployment checker
 gcloud builds submit \
    --project ${PROJECT_ID} \
-   --substitutions _DEPLOY_PROJECT_ID=${PROJECT_ID},_DEPLOY_BUCKET_NAME=${PROJECT_ID}-dags,_LOG_BUCKET_NAME=${PROJECT_ID}-logs .
+   --substitutions _DEPLOY_PROJECT_ID=${PROJECT_ID},_DEPLOY_BUCKET_NAME=${DAGS_BUCKET},_LOG_BUCKET_NAME=${LOGS_BUCKET} .
 
 # Change back to parent / root folder
 cd ${HOME}
