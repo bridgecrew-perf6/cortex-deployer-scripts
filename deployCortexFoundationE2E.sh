@@ -15,19 +15,14 @@
 # limitations under the License.
 
 # Check and set configured project (default = current)
-read -p "Enter project id [default:current project]: " PROJECT_ID
-PROJECT_ID=${PROJECT_ID:-$(gcloud config get-value project)}
-
+read -e -i $(gcloud config get-value project) -p "Enter project id: " PROJECT_ID
 gcloud config set project ${PROJECT_ID}
 
 # Variables
 PROJECT_NUMBER=$(gcloud projects list --filter="${PROJECT_ID}" --format="value(PROJECT_NUMBER)")
 
-read -p "Enter google cloud region [default: us-central1]: " REGION
-REGION=${REGION:-us-central1}
-
-read -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
-UMSA=${UMSA:-cortex-deployer-sa}
+read -e -i "us-central1" -p "Enter google cloud region [default: us-central1]: " REGION
+read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
 
 UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
 CBSA_FQN=${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com
@@ -298,27 +293,30 @@ if [[ ${COMPOSER_GEN_BUCKET_NAME} -eq '' ]] ; then
     exit 1
 fi
 
-read -p "Enter name of the BQ dataset for landing raw data [default: RAW_LANDING]: " DS_RAW
-DS_RAW=${DS_RAW:-RAW_LANDING}
+read -e -i "RAW_LANDING" -p "Enter name of the BQ dataset for landing raw data [default: RAW_LANDING]: " DS_RAW
 bq --location=${REGION} mk -d ${DS_RAW}
 
-read -p "Enter name of the BQ dataset for changed data processing [default: CDC_PROCESSED]: " DS_CDC
-DS_CDC=${DS_CDC:-CDC_PROCESSED}
+read -e -i "CDC_PROCESSED" -p "Enter name of the BQ dataset for changed data processing [default: CDC_PROCESSED]: " DS_CDC
 bq --location=${REGION} mk -d ${DS_CDC}
 
-read -p "Enter name of the BQ dataset for ML models [default: MODELS]: " DS_MODELS
-DS_MODELS=${DS_MODELS:-'MODELS'}
+read -e -i "MODELS" -p "Enter name of the BQ dataset for ML models [default: MODELS]: " DS_MODELS
 bq --location=${REGION} mk -d ${DS_MODELS}
 
-read -p "Enter name of the BQ dataset for reporting views [default: REPORTING]: " DS_REPORTING
-DS_REPORTING=${DS_REPORTING:-'REPORTING'}
+read -e -i "REPORTING" -p "Enter name of the BQ dataset for reporting views [default: REPORTING]: " DS_REPORTING
 bq --location=${REGION} mk -d ${DS_REPORTING}
 
 # Create a storage bucket for Airflow DAGs
-gsutil mb -l ${REGION} gs://${PROJECT_ID}-dags
+read -e -i ${PROJECT_ID}-dags -p "Enter name of the GCS Bucket for Airflow DAGs [default: ${PROJECT_ID}-dags]: " DAGS_BUCKET
+echo 'Creating GCS bucket for Airflow DAGs...'${DAGS_BUCKET}
+gsutil mb -l ${REGION} gs://${DAGS_BUCKET}
 
 # Create a storage bucket for logs
-gsutil mb -l ${REGION} gs://${PROJECT_ID}-logs
+read -e -i ${PROJECT_ID}-logs -p "Enter name of the GCS Bucket for Cortex deployment logs [default: ${PROJECT_ID}-logs]: " LOGS_BUCKET
+echo 'Creating GCS bucket for cortex data foundation deployment logs...\n'
+gsutil mb -l ${REGION} gs://${LOGS_BUCKET}
+
+# Change to parent / root folder
+cd ${HOME}
 
 # Clone and run deployment checker
 git clone  https://github.com/fawix/mando-checker

@@ -15,9 +15,7 @@
 # limitations under the License.
 
 # Check and set configured project (default = current)
-read -p "Enter project id [default:current project]: " PROJECT_ID
-PROJECT_ID=${PROJECT_ID:-$(gcloud config get-value project)}
-
+read -e -i $(gcloud config get-value project) -p "Enter project id: " PROJECT_ID
 gcloud config set project ${PROJECT_ID}
 
 # Variables
@@ -58,6 +56,19 @@ gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member="serviceAccount:${UMSA_FQN}" \
     --role="roles/cloudbuild.builds.editor"  
 
+HOME=$(pwd)
+
+# Enable required APIs
+gcloud services enable \
+    bigquery.googleapis.com \
+
+if [[ $? -ne 0 ]] ; then
+    echo "Required APIs could NOT be enabled"
+    exit 1
+else
+    echo "Required APIs enabled successfully"
+fi
+
 read -e -i "RAW_LANDING" -p "Enter name of the BQ dataset for landing raw data [default: RAW_LANDING]: " DS_RAW
 bq --location=${REGION} mk -d ${DS_RAW}
 
@@ -71,7 +82,6 @@ read -e -i "REPORTING" -p "Enter name of the BQ dataset for reporting views [def
 bq --location=${REGION} mk -d ${DS_REPORTING}
 
 # Create a storage bucket for Airflow DAGs
-# Create a storage bucket for Airflow DAGs
 read -e -i ${PROJECT_ID}-dags -p "Enter name of the GCS Bucket for Airflow DAGs [default: ${PROJECT_ID}-dags]: " DAGS_BUCKET
 echo 'Creating GCS bucket for Airflow DAGs...'${DAGS_BUCKET}
 gsutil mb -l ${REGION} gs://${DAGS_BUCKET}
@@ -81,18 +91,8 @@ read -e -i ${PROJECT_ID}-logs -p "Enter name of the GCS Bucket for Cortex deploy
 echo 'Creating GCS bucket for cortex data foundation deployment logs...\n'
 gsutil mb -l ${REGION} gs://${LOGS_BUCKET}
 
-HOME=$(pwd)
-
-# Enable required APIs
-gcloud services enable \
-    bigquery.googleapis.com \
-
-if [[ $? -ne 0 ]] ; then
-    echo "Required APIs could NOT be enabled"
-    exit 1
-else
-    echo "Required APIs enabled successfully"
-fi
+# Change to parent / root folder
+cd ${HOME}
 
 # Clone and run deployment checker
 git clone  https://github.com/fawix/mando-checker

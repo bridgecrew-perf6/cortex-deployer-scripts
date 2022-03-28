@@ -15,9 +15,7 @@
 # limitations under the License.
 
 # Check and set configured project (default = current)
-read -p "Enter project id [default:current project]: " PROJECT_ID
-PROJECT_ID=${PROJECT_ID:-$(gcloud config get-value project)}
-
+read -e -i $(gcloud config get-value project) -p "Enter project id: " PROJECT_ID
 gcloud config set project ${PROJECT_ID}
 
 # Variables
