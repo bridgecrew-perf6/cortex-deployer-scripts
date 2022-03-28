@@ -21,7 +21,9 @@ gcloud config set project ${PROJECT_ID}
 # Variables
 PROJECT_NUMBER=$(gcloud projects list --filter="${PROJECT_ID}" --format="value(PROJECT_NUMBER)")
 
-read -e -i "us-central1" -p "Enter google cloud region [default: us-central1]: " REGION
+read -e -i "us-central1" -p "Enter google cloud region for GCS buckets [default: us-central1]: " REGION
+#  @TODO: Currently only US works!
+read -e -i "us" -p "Enter google cloud region for BQ datasets [default: us]: " BQ_REGION
 read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
 
 UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
@@ -70,16 +72,16 @@ else
 fi
 
 read -e -i "RAW_LANDING" -p "Enter name of the BQ dataset for landing raw data [default: RAW_LANDING]: " DS_RAW
-bq --location=${REGION} mk -d ${DS_RAW}
+bq --location=${BQ_REGION} mk -d ${DS_RAW}
 
 read -e -i "CDC_PROCESSED" -p "Enter name of the BQ dataset for changed data processing [default: CDC_PROCESSED]: " DS_CDC
-bq --location=${REGION} mk -d ${DS_CDC}
+bq --location=${BQ_REGION} mk -d ${DS_CDC}
 
 read -e -i "MODELS" -p "Enter name of the BQ dataset for ML models [default: MODELS]: " DS_MODELS
-bq --location=${REGION} mk -d ${DS_MODELS}
+bq --location=${BQ_REGION} mk -d ${DS_MODELS}
 
 read -e -i "REPORTING" -p "Enter name of the BQ dataset for reporting views [default: REPORTING]: " DS_REPORTING
-bq --location=${REGION} mk -d ${DS_REPORTING}
+bq --location=${BQ_REGION} mk -d ${DS_REPORTING}
 
 # Create a storage bucket for Airflow DAGs
 read -e -i ${PROJECT_ID}-dags -p "Enter name of the GCS Bucket for Airflow DAGs [default: ${PROJECT_ID}-dags]: " DAGS_BUCKET

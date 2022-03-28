@@ -25,10 +25,11 @@ COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_N
 COMPOSER_GEN_BUCKET_NAME=$(echo ${COMPOSER_GEN_BUCKET_FQN} | cut -d'/' -f 3)
 echo ${COMPOSER_GEN_BUCKET_NAME}
 if [ -z ${COMPOSER_GEN_BUCKET_NAME} ] ; then
-    echo "\nCannot find DAGs bucket for the new composer environment. Please cehck environment creation logs \n"
+    echo "Cannot find DAGs bucket for the new composer environment. Please cehck environment creation logs"
     exit 1
 fi
 
+cd ${HOME}
 # Clone the Open Source Git Repo from Github
 git clone --recurse-submodules https://github.com/GoogleCloudPlatform/cortex-data-foundation
 
@@ -64,12 +65,11 @@ gsutil -m cp -r  ${SRC_HIER_BUCKET} ${TGT_HIER_BUCKET}
 # Change back to parent / root folder
 cd ${HOME}
 
+# Cleanup clones repo folders
+rm -rf cortex-data-foundation
+
 # Delete holding bucket
 # gsutil rm -r gs://${PROJECT_ID}-dags
-
-# Cleanup clones repo folders
-# rm -rf mando-checker
-# rm -rf cortex-data-foundation
 
 # Delete service account
 # gcloud iam service-accounts delete ${UMSA_FQN}
