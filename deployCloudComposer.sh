@@ -39,17 +39,10 @@ SUBNET_NM=${VPC_NM}-subnet
 
 COMPOSER_ENV_NM=$PROJECT_ID-cortex
 
-DS_RAW=RAW_LANDING
-DS_CDC=CDC_PROCESSED
-DS_MODELS=MODELS
-DS_REPORTING=REPORTING
-
 HOME=$(pwd)
 
 # Enable required APIs
 gcloud services enable \
-    bigquery.googleapis.com \
-    cloudbuild.googleapis.com \
     composer.googleapis.com \
     storage-component.googleapis.com \
     cloudresourcemanager.googleapis.com \
@@ -253,34 +246,6 @@ gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member=serviceAccount:${UMSA_FQN} \
     --role="roles/storage.objectViewer"
 
-# Grant IAM Permissions to UMSA for BigQuery Tasks
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSA_FQN} \
-    --role="roles/bigquery.admin"
-
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSA_FQN} \
-    --role="roles/bigquery.dataEditor"
-
-# Grant IAM Permissions to CBSA for BigQuery Tasks
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${CBSA_FQN} \
-    --role="roles/bigquery.dataEditor"
-
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member="serviceAccount:${CBSA_FQN}" \
-    --role="roles/bigquery.jobUser"
-
-# Grant IAM permisiions to CBSA for Storage Tasks
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${CBSA_FQN} \
-    --role="roles/storage.objectAdmin"
-
-# Grant permissions to service account to run cloud build
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member="serviceAccount:${UMSA_FQN}" \
-    --role="roles/cloudbuild.builds.editor"    
-
 # Create a composer environment
 gcloud composer environments create ${COMPOSER_ENV_NM} \
     --location ${REGION} \
@@ -289,82 +254,5 @@ gcloud composer environments create ${COMPOSER_ENV_NM} \
     --subnetwork ${SUBNET_NM} \
     --service-account ${UMSA_FQN} \
 
-# Extract the bucket name generated during composer environment creation
-COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')
-COMPOSER_GEN_BUCKET_NAME=$(echo ${COMPOSER_GEN_BUCKET_FQN} | cut -d'/' -f 3)
-echo ${COMPOSER_GEN_BUCKET_NAME}
-if [[ ${COMPOSER_GEN_BUCKET_NAME} -eq '' ]] ; then
-    echo "\nCannot find DAGs bucket for the new composer environment. Please cehck environment creation logs \n"
-    exit 1
-fi
-
-# Create a storage bucket for Airflow DAGs
-gsutil mb -l ${REGION} gs://${PROJECT_ID}-dags
-
-# Create a storage bucket for logs
-gsutil mb -l ${REGION} gs://${PROJECT_ID}-logs
-
-# Create Cortex Data Foundation Dataset: RAW_LANDING
-bq --location=${REGION} mk -d ${DS_RAW}
-
-# Create Cortex Data Foundation Dataset: CDC_PROCESSED
-bq --location=${REGION} mk -d ${DS_CDC}
-
-# Clone and run deployment checker
-git clone  https://github.com/fawix/mando-checker
-
-# Change to mando-checker folder
-cd mando-checker
-
-# Run the deployment checker
-gcloud builds submit \
-   --project ${PROJECT_ID} \
-   --substitutions _DEPLOY_PROJECT_ID=${PROJECT_ID},_DEPLOY_BUCKET_NAME=${PROJECT_ID}-dags,_LOG_BUCKET_NAME=${PROJECT_ID}-logs .
-
-# Change back to parent / root folder
-cd ${HOME}
-
-# Clone the Open Source Git Repo from Github
-git clone --recurse-submodules https://github.com/GoogleCloudPlatform/cortex-data-foundation
-
-# Change to cloned repo folder
-cd cortex-data-foundation
-
-# Run cloud build
-gcloud builds submit --project ${PROJECT_ID} \
-    --substitutions \
-        _PJID_SRC=${PROJECT_ID},_PJID_TGT=${PROJECT_ID},_DS_CDC=${DS_CDC},_DS_RAW=${DS_RAW},_DS_REPORTING=${DS_REPORTING},_DS_MODELS=${DS_MODELS},_GCS_BUCKET=${PROJECT_ID}-logs,_TGT_BUCKET=${PROJECT_ID}-dags,_TEST_DATA=true,_DEPLOY_CDC=true
-
-OPEN_BUILDS= $(gcloud builds list --filter 'status=WORKING')
-while [ ! -z ${OPEN_BUILDS} ]
-do 
-    echo "waiting for cortex-data-foundation build to complete..."
-    sleep 5m
-    ${OPEN_BUILDS}=$(gcloud builds list --filter 'status=WORKING')
-done
-
-# Copy files from generation storage bucket to Cloud Composer DAGs bucket folders
-SRC_DAGS_BUCKET=$(echo gs://${PROJECT_ID}-dags/dags)
-TGT_DAGS_BUCKET=$(echo gs://${COMPOSER_GEN_BUCKET_NAME}/dags)
-gsutil -m cp -r  ${SRC_DAGS_BUCKET} ${TGT_DAGS_BUCKET}
-
-SRC_DATA_BUCKET=$(echo gs://${PROJECT_ID}-dags/data)
-TGT_DATA_BUCKET=$(echo gs://${COMPOSER_GEN_BUCKET_NAME}/data)
-gsutil -m cp -r  ${SRC_DATA_BUCKET} ${TGT_DATA_BUCKET} 
-
-SRC_HIER_BUCKET=$(echo gs://${PROJECT_ID}-dags/hierarchies)
-TGT_HIER_BUCKET=$(echo gs://${COMPOSER_GEN_BUCKET_NAME}/dags/hierarchies/)
-gsutil -m cp -r  ${SRC_HIER_BUCKET} ${TGT_HIER_BUCKET} 
-
-# Change back to parent / root folder
-cd ${HOME}
-
-# Delete holding bucket
-# gsutil rm -r gs://${PROJECT_ID}-dags
-
-# Cleanup clones repo folders
-# rm -rf mando-checker
-# rm -rf cortex-data-foundation
-
-# Delete service account
-# gcloud iam service-accounts delete ${UMSA_FQN}
+echo "\nSuccessfully triggered deployment of new cloud composer environment. Please cehck environment creation logs \n"
+exit 0

@@ -14,8 +14,9 @@ Following steps are strict pre-requisites in Argolis environment before running 
 - Log-in to Argolis as user with project creation permission and create a new project.  Note project ID. We will need this for the rest of this script
 
 ## Instructions to deploy to new argolis project
-1. Login to Cloud Shell --> Open Editor --> Open New Terminal
-2. Clone this repo.  Change working directory to this repo's root.
+1. Check Billing Account for the new project is set.  If not proceeed to set it. Login with user credentials that has the required role: ```Billing Account Creator```. Open Cloud Console --> From Org view --> Switch to Home Page of new Proejct --> (Click Hamburger Menu - Top Left) Select ```Billing``` --> ```Link Billing Account```.  On the pop-up that follows (Title: Select the billing account for your project ```<<Your New Project Name>>```) --> select an existing billing account from the drop-down and click ```Set Account```.  Do NOT forget to switch back to a Argolis user account, before you continue with the next steps.
+2. Login to Cloud Shell --> Open Editor --> Open New Terminal
+3. Clone this repo.  Change working directory to this repo's root.
 ```shell
 git clone https://github.com/ssdramesh/cortex-deployer-scripts
 ```

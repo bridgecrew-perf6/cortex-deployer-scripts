@@ -60,7 +60,8 @@ COMPOSER_ENV_NM=${PROJECT_ID}-cortex
 COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')
 COMPOSER_GEN_BUCKET_NAME=$(echo ${COMPOSER_GEN_BUCKET_FQN} | cut -d'/' -f 3)
 if [[ -z ${COMPOSER_GEN_BUCKET_NAME} ]] ; then
-    echo 'Could not extract Cloud Composer bucket location for environment: '${COMPOSER_ENV_NM}    
+    echo '\nCould not extract Cloud Composer bucket location for environment: '${COMPOSER_ENV_NM} 
+    echo  '\n Please check Cloud Composer environment creation logs'
     exit 1
 fi
 
