@@ -341,7 +341,7 @@ cd cortex-data-foundation
 # Run cloud build
 gcloud builds submit --project ${PROJECT_ID} \
     --substitutions \
-        _PJID_SRC=${PROJECT_ID},_PJID_TGT=${PROJECT_ID},_DS_CDC=${DS_CDC},_DS_RAW=${DS_RAW},_DS_REPORTING=${DS_REPORTING},_DS_MODELS=${DS_MODELS},_GCS_BUCKET=${PROJECT_ID}-logs,_TGT_BUCKET=${PROJECT_ID}-dags,_TEST_DATA=true,_DEPLOY_CDC=true
+        _PJID_SRC=${PROJECT_ID},_PJID_TGT=${PROJECT_ID},_DS_CDC=${DS_CDC},_DS_RAW=${DS_RAW},_DS_REPORTING=${DS_REPORTING},_DS_MODELS=${DS_MODELS},_GCS_BUCKET=${LOGS_BUCKET},_TGT_BUCKET=${DAGS_BUCKET},_TEST_DATA=true,_DEPLOY_CDC=true
 
 OPEN_BUILDS= $(gcloud builds list --filter 'status=WORKING')
 while [ ! -z ${OPEN_BUILDS} ]
