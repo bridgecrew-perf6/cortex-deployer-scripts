@@ -13,7 +13,7 @@ Following steps are strict pre-requisites in Argolis environment before running 
 - Grant yourself Organization Policy Administrator at an Organization level.  This is needed to set project level policies.  In the UI, set context to organization level (instead of project).  Go to Cloud IAM and through the UI, grant yourself Organization Policy Administrator at an Organization level.
 - Log-in to Argolis as user with project creation permission and create a new project.  Note project ID. We will need this for the rest of this script
 
-## Instructions to deploy to new argolis project
+## Instructions for end-to-end deployment to new project (fro example, in Argolis environment)
 1. Check Billing Account for the new project is set.  If not proceeed to set it. Login with user credentials that has the required role: ```Billing Account Creator```. Open Cloud Console --> From Org view --> Switch to Home Page of new Proejct --> (Click Hamburger Menu - Top Left) Select ```Billing``` --> ```Link Billing Account```.  On the pop-up that follows (Title: Select the billing account for your project ```<<Your New Project Name>>```) --> select an existing billing account from the drop-down and click ```Set Account```.  Do NOT forget to switch back to a Argolis user account, before you continue with the next steps.
 2. Login to Cloud Shell --> Open Editor --> Open New Terminal
 3. Clone this repo.  Change working directory to this repo's root.
@@ -25,11 +25,11 @@ cd cortex-deployer-scripts
 ```
 4. Run required script in Terminal
 ```shell
-sh deployCortexFoundation.sh
+sh deployCortexFoundationE2E.sh
 ```
-Total Deployment Time: ~100 min.
+Total Deployment Time: ~120-140 min.
 
-## What will happen?
+### What will happen in end-to-end deployment?
 1. All required APIs will be enabled
 2. A VPC for the demo will be created, with a subnet in US
 3. A User Managed Service Account (UMSA) will be created for Cortex deployment.  Required permissions will be given
@@ -40,3 +40,17 @@ Total Deployment Time: ~100 min.
 8. Mando Checker will be run  <--Can be removed
 9. Cortex Deployment will be run with test harness and CDC DAG creation
 10. DAGs will be copied to composer Composer buckets <--Separate script
+
+## Instructions for end-to-end undeployment of cortex foundation
+1. Run required script in Terminal
+```shell
+sh unDeployCortexFoundationE2E.sh
+```
+
+### What will happen in end-to-end deployment?
+
+## Instructions for step-by-step deployment (Workshop / Labs mode)
+### Exercise 1: Deploy Cloud Composer instance
+### Exercise 2: Deploy BigQuery Datasets
+### Exercise 3: Deploy Cortex Foundation
+### Exercise 4: Deploy Cortex Solution
