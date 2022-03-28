@@ -18,7 +18,8 @@ UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
 CBSA_FQN=${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com
 ADMIN_FQ_UPN=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
 
-HOME=$(pwd)
+# Change to user root for cloning new repos
+HOME=$(dirname $(pwd))
 
 # Extract the bucket name generated during composer environment creation
 COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')

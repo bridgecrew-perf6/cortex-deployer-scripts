@@ -29,6 +29,19 @@ read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deploym
 UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
 CBSA_FQN=${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com
 ADMIN_FQ_UPN=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
+# Change to user root for cloning new repos
+HOME=$(dirname $(pwd))
+
+# Enable required APIs
+gcloud services enable \
+    bigquery.googleapis.com \
+
+if [[ $? -ne 0 ]] ; then
+    echo "Required APIs could NOT be enabled"
+    exit 1
+else
+    echo "Required APIs enabled successfully"
+fi
 
 # Grant IAM Permissions to UMSA for BigQuery Tasks
 gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
@@ -57,19 +70,6 @@ gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
 gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
     --member="serviceAccount:${UMSA_FQN}" \
     --role="roles/cloudbuild.builds.editor"  
-
-HOME=$(pwd)
-
-# Enable required APIs
-gcloud services enable \
-    bigquery.googleapis.com \
-
-if [[ $? -ne 0 ]] ; then
-    echo "Required APIs could NOT be enabled"
-    exit 1
-else
-    echo "Required APIs enabled successfully"
-fi
 
 read -e -i "RAW_LANDING" -p "Enter name of the BQ dataset for landing raw data [default: RAW_LANDING]: " DS_RAW
 bq --location=${BQ_REGION} mk -d ${DS_RAW}
