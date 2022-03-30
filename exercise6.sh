@@ -105,7 +105,16 @@ gcloud projects add-iam-policy-binding {PROJECT_ID} \
      --member=serviceAccount:service-${PSSA_FQN} \
      --role=roles/iam.serviceAccountTokenCreator
 
+# Create Cluster
+
 # Configure Workload Identity for your target namespace for the deployer service account. The Kubernetes SA name is `cortex-apployer-bot`.
-gcloud iam service-accounts add-iam-policy-binding ${UMSD_FQN} \
+# This step is only after the creation of a cluster
+gcloud iam service-accounts add-iam-policy-binding ${UMSAD_FQN} \
   --role roles/iam.workloadIdentityUser \
   --member "serviceAccount:${WISA}"
+
+# @TODO: (after published in GCP marketplace)
+# Clone repo 
+
+# @TODO: (after published in GCP marketplace)
+# Cloud build
