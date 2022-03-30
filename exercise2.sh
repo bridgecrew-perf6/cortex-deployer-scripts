@@ -43,33 +43,19 @@ else
     echo "Required APIs enabled successfully"
 fi
 
-# Grant IAM Permissions to UMSA for BigQuery Tasks
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSA_FQN} \
-    --role="roles/bigquery.admin"
+# Grant roles to user managed service account (UMSA) for BigQuery Tasks
+for role in 'roles/bigquery.admin' 'roles/bigquery.dataEditor' 'roles/cloudbuild.builds.editor' ; do
+    gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
+        --member=serviceAccount:${UMSA_FQN} \
+        --role="$role"
+done
 
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSA_FQN} \
-    --role="roles/bigquery.dataEditor"
-
-# Grant IAM Permissions to CBSA for BigQuery Tasks
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${CBSA_FQN} \
-    --role="roles/bigquery.dataEditor"
-
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member="serviceAccount:${CBSA_FQN}" \
-    --role="roles/bigquery.jobUser"
-
-# Grant IAM permisions to CBSA for Storage Tasks
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${CBSA_FQN} \
-    --role="roles/storage.objectAdmin"
-
-# Grant permissions to service account to run cloud build
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member="serviceAccount:${UMSA_FQN}" \
-    --role="roles/cloudbuild.builds.editor"  
+# Grant roles to cloud build service account fot BigQuery Tasks
+for role in 'roles/bigquery.dataEditor' 'roles/bigquery.jobUser' 'roles/storage.objectAdmin' ; do
+    gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
+        --member=serviceAccount:${CBSA_FQN} \
+        --role="$role"
+done
 
 read -e -i "RAW_LANDING" -p "Enter name of the BQ dataset for landing raw data [default: RAW_LANDING]: " DS_RAW
 bq --location=${BQ_REGION} mk -d ${DS_RAW}

@@ -42,37 +42,11 @@ gcloud iam service-accounts create -q ${UMSAD} \
     --display-name=$UMSAD
 
 # Grant IAM Permissions to deployer service account
-# Cloud Run Administrator
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSAD_FQN} \
-    --role="roles/run.admin"
-
-# Cloud Scheduler Administrator
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSAD_FQN} \
-    --role="roles/cloudscheduler.admin"
-
-# Pub/Sub Administrator
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSAD_FQN} \
-    --role="roles/pubsub.admin"
-
-
-# Service Usage Administrator
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSAD_FQN} \
-    --role="roles/serviceusage.serviceUsageAdmin"
-
-
-# Source Repository Administrator
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSAD_FQN} \
-    --role="roles/source.admin"
-
-# Storage Object Admin
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSAD_FQN} \
-    --role="roles/storage.admin"
+for role in 'roles/run.admin' 'roles/cloudscheduler.admin' 'roles/pubsub.admin' 'roles/serviceusage.serviceUsageAdmin' 'roles/source.admin' 'roles/storage.objectAdmin' 'roles/iam.serviceAccountUser' ; do
+    gcloud projects add-iam-policy-binding -q $PROJECT_ID \
+        --member=serviceAccount:${UMSAD_FQN} \
+        --role="$role"
+done
 
 # Create the User Managed Service Account for running Cortex sample application UMSAR
 gcloud iam service-accounts create -q ${UMSAR} \
@@ -80,25 +54,11 @@ gcloud iam service-accounts create -q ${UMSAR} \
     --display-name=$UMSAR
 
 # Grant IAM Permissions to runner service account
-# Cloud Run Invoker
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSAR_FQN} \
-    --role="roles/run.invoker"
-
-# BigQuery Data Viewer
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSAR_FQN} \
-    --role="roles/bigquery.dataViewer"
-
-# BigQuery Job User
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSAR_FQN} \
-    --role="roles/bigquery.jobUser"
-
-# Pub/Sub Publisher
-gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
-    --member=serviceAccount:${UMSAR_FQN} \
-    --role="roles/pubsub.publisher)"
+for role in 'roles/run.invoker' 'roles/cloudscheduler.admin' 'roles/bigquery.dataViewer' 'roles/bigquery.jobUser' 'roles/pubsub.publisher' ; do
+    gcloud projects add-iam-policy-binding $PROJECT_ID \
+        --member="serviceAccount:${UMSAR_FQN}" \
+        --role="$role"
+done
 
 # Configure Pub / Sub
 gcloud projects add-iam-policy-binding {PROJECT_ID} \
@@ -106,15 +66,12 @@ gcloud projects add-iam-policy-binding {PROJECT_ID} \
      --role=roles/iam.serviceAccountTokenCreator
 
 # Create Cluster
+# this creates a very bare-minimum cluster with all defaults
+gcloud container clusters create cortex \
+    --workload-pool=$PROJECT_ID.svc.id.goog
 
 # Configure Workload Identity for your target namespace for the deployer service account. The Kubernetes SA name is `cortex-apployer-bot`.
 # This step is only after the creation of a cluster
 gcloud iam service-accounts add-iam-policy-binding ${UMSAD_FQN} \
   --role roles/iam.workloadIdentityUser \
   --member "serviceAccount:${WISA}"
-
-# @TODO: (after published in GCP marketplace)
-# Clone repo 
-
-# @TODO: (after published in GCP marketplace)
-# Cloud build
