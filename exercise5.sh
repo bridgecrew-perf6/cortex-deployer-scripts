@@ -33,6 +33,11 @@ UMSAR_FQN=$UMSAR@${PROJECT_ID}.iam.gserviceaccount.com
 PSSA_FQN=${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com
 WISA=${PROJECT_ID}.svc.id.goog[default/cortex-apployer-bot]
 
+#  Enable APIs
+gcloud services enable \
+    cloudscheduler.googleapis.com \    
+    pubsub.googleapis.com
+
 # Create a bucket for cortex sample application deployment:
 gsutil mb -l ${REGION} gs://${APP_BUCKET}
 

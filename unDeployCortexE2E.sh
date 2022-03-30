@@ -176,28 +176,31 @@ gcloud org-policies set-policy gcf-ingress-settings.yaml
 
 rm gcf-ingress-settings.yaml
 
-# Remove other Cloud Storage Buckets created by cloud buils and cortex deployment
-gsutil rm -r gs://${PROJECT_ID}-dags
-gsutil rm -r gs://${PROJECT_ID}-logs
+# Remove other Cloud Storage Buckets created by cloud builds and cortex deployment
+read -e -i ${PROJECT_ID}-dags -p "Enter name of the GCS Bucket for Airflow DAGs [default: ${PROJECT_ID}-dags]: " DAGS_BUCKET
+echo 'Deleting GCS bucket for cortex data foundation DAGs...'
+gsutil rm -r gs://${DAGS_BUCKET}
+
+read -e -i ${PROJECT_ID}-logs -p "Enter name of the GCS Bucket for Cortex deployment logs [default: ${PROJECT_ID}-logs]: " LOGS_BUCKET
+echo 'Deleting GCS bucket for cortex data foundation deployment logs...'
+gsutil rm -r gs://${LOGS_BUCKET}
+
+read -e -i ${PROJECT_ID}-cortex-app -p "Enter GCS Bucket identifier for deployment [default: ${PROJECT_ID}-cortex-app]: " APP_BUCKET
+gsutil rm -r gs://${APP_BUCKET}
+
+echo 'Deleting GCS bucket for all cloud build logs...'
 gsutil rm -r gs://${PROJECT_ID}_cloudbuild
 
 # Remove VPC Network
 read -e -i "demo" -p "Enter VPC network [default: demo]: " VPC_NM
 gcloud compute networks delete ${VPC_NM}
 
-# Remove IAM Permissions to CBSA for BigQuery Tasks
+# Remove roles for cloud build
+for role in 'roles/bigquery.dataEditor' 'roles/bigquery.jobUser' 'roles/storage.objectAdmin' ; do
 gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
     --member=serviceAccount:${CBSA_FQN} \
-    --role="roles/bigquery.dataEditor"
-
-gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
-    --member="serviceAccount:${CBSA_FQN}" \
-    --role="roles/bigquery.jobUser"
-
-# Remove IAM permisiions to CBSA for Storage Tasks
-gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
-    --member=serviceAccount:${CBSA_FQN} \
-    --role="roles/storage.objectAdmin"
+    --role="$role"
+done
 
 # Grant logged in user permission to remove service accounts
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
@@ -205,16 +208,22 @@ gcloud projects add-iam-policy-binding ${PROJECT_ID} \
     --role:"roles/iam.serviceAccountKeyAdmin"
 
 # Remove User Managed Service Account (UMSA)
-read -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
-UMSA=${UMSA:-cortex-deployer-sa}
+read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-deployer-sa]: " UMSA
+read -e -i "cortex-app-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-app-deployer-sa]: " UMSAD
+read -e -i "cortex-app-runner-sa" -p "Enter service account identifier for running app [default: cortex-app-runner-sa]: " UMSAR
+
 UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
+UMSAD_FQN=$UMSAD@${PROJECT_ID}.iam.gserviceaccount.com
+UMSAR_FQN=$UMSAR@${PROJECT_ID}.iam.gserviceaccount.com
+
 gcloud auth revoke ${UMSA_FQN}
 gcloud iam service-accounts delete -q ${UMSA_FQN}
 
-# Revoke logged in user permission to remove service accounts
-gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
-    --member=${ADMIN_FQ_UPN}
-    --role:"roles/iam.serviceAccountKeyAdmin"
+gcloud auth revoke ${UMSAD_FQN}
+gcloud iam service-accounts delete -q ${UMSAD_FQN}
+
+gcloud auth revoke ${UMSAD_FQN}
+gcloud iam service-accounts delete -q ${UMSAD_FQN}
 
 # Disbale APIs
 gcloud services disable --force \
@@ -227,7 +236,9 @@ gcloud services disable --force \
     compute.googleapis.com \
     monitoring.googleapis.com \
     cloudtrace.googleapis.com \
-    clouddebugger.googleapis.com
+    clouddebugger.googleapis.com \
+    cloudscheduler.googleapis.com \
+    pubsub.googleapis.com
 
 if [[ $? -ne 0 ]] ; then
     echo "Required APIs could NOT be disabled"
@@ -235,7 +246,3 @@ if [[ $? -ne 0 ]] ; then
 else
     echo "Required APIs disabled successfully"
 fi
-
-# Remove cloned repo folder
-cd ${HOME}
-rm -rf cortex-deployer-scripts

@@ -48,7 +48,10 @@ gcloud services enable \
     compute.googleapis.com \
     monitoring.googleapis.com \
     cloudtrace.googleapis.com \
-    clouddebugger.googleapis.com
+    clouddebugger.googleapis.com \
+    cloudscheduler.googleapis.com \
+    pubsub.googleapis.com
+
 
 if [[ $? -ne 0 ]] ; then
     echo "Required APIs could NOT be enabled"
@@ -315,3 +318,56 @@ cd ${HOME}
 # Cleanup clones repo folders
 rm -rf mando-checker
 rm -rf cortex-data-foundation
+
+read -e -i "cortex-app-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-app-deployer-sa]: " UMSAD
+read -e -i "cortex-app-runner-sa" -p "Enter service account identifier for running app [default: cortex-app-runner-sa]: " UMSAR
+read -e -i ${PROJECT_ID}-cortex-app -p "Enter GCS Bucket identifier for deployment [default: ${PROJECT_ID}-cortex-app]: " APP_BUCKET
+
+UMSAD_FQN=$UMSAD@${PROJECT_ID}.iam.gserviceaccount.com
+UMSAR_FQN=$UMSAR@${PROJECT_ID}.iam.gserviceaccount.com
+PSSA_FQN=${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com
+WISA=${PROJECT_ID}.svc.id.goog[default/cortex-apployer-bot]
+
+# Create a bucket for cortex sample application deployment:
+gsutil mb -l ${REGION} gs://${APP_BUCKET}
+
+# Create the User Managed Service Account for Deployment UMSAD
+gcloud iam service-accounts create -q ${UMSAD} \
+    --description="User Managed Service Account for Cortex Application Deployment" \
+    --display-name=$UMSAD
+
+# Grant IAM Permissions to deployer service account
+for role in 'roles/run.admin' 'roles/cloudscheduler.admin' 'roles/pubsub.admin' 'roles/serviceusage.serviceUsageAdmin' 'roles/source.admin' 'roles/storage.objectAdmin' 'roles/iam.serviceAccountUser' ; do
+    gcloud projects add-iam-policy-binding -q $PROJECT_ID \
+        --member=serviceAccount:${UMSAD_FQN} \
+        --role="$role"
+done
+
+# Create the User Managed Service Account for running Cortex sample application UMSAR
+gcloud iam service-accounts create -q ${UMSAR} \
+    --description="User Managed Service Account for running Cortex Application" \
+    --display-name=$UMSAR
+
+# Grant IAM Permissions to runner service account
+for role in 'roles/run.invoker' 'roles/cloudscheduler.admin' 'roles/bigquery.dataViewer' 'roles/bigquery.jobUser' 'roles/pubsub.publisher' ; do
+    gcloud projects add-iam-policy-binding $PROJECT_ID \
+        --member="serviceAccount:${UMSAR_FQN}" \
+        --role="$role"
+done
+
+# Application Layer
+# Configure Pub / Sub
+gcloud projects add-iam-policy-binding {PROJECT_ID} \
+     --member=serviceAccount:service-${PSSA_FQN} \
+     --role=roles/iam.serviceAccountTokenCreator
+
+# Create Cluster
+# this creates a very bare-minimum cluster with all defaults
+gcloud container clusters create cortex \
+    --workload-pool=$PROJECT_ID.svc.id.goog
+
+# Configure Workload Identity for your target namespace for the deployer service account. The Kubernetes SA name is `cortex-apployer-bot`.
+# This step is only after the creation of a cluster
+gcloud iam service-accounts add-iam-policy-binding ${UMSAD_FQN} \
+  --role roles/iam.workloadIdentityUser \
+  --member "serviceAccount:${WISA}"
