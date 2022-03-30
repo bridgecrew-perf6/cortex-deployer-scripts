@@ -348,6 +348,19 @@ gsutil -m cp -r  ${SRC_HIER_BUCKET} ${TGT_HIER_BUCKET}
 # Delete holding bucket
 gsutil rm -r gs://${PROJECT_ID}-dags
 
+
+# Argolis/Google Internal-specific: Share your datasets with googlecloud.looker.com
+read -e -i "N" -p "Do you want to connect your datasets to Google-internal looker demo instance [Y/N] " IS_ARGOLIS
+if [[ ${IS_ARGOLIS} =~ ^([yY][eE][sS] | [yY])$ ]]
+then
+    gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
+        --member=serviceAccount:googlecloud@sandbox-trials.iam.gserviceaccount.com \
+        --role="roles/bigquery.dataViewer"    
+    gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
+        --member=serviceAccount:googlecloud@sandbox-trials.iam.gserviceaccount.com \
+        --role="roles/viewer"
+fi
+
 # Change back to parent / root folder
 cd ${HOME}
 
