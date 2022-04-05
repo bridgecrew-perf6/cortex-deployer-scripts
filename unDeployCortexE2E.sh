@@ -72,105 +72,23 @@ do
     gcloud compute disks delete -q $(gcloud compute disks list --filter="zone=${ZONE} AND -users:*" --format "value(name)")
 done
 
-# Restore permissions relaxed for creation of Cloud Composer
-# Enable OS Login
-rm os_login.yaml
+# Reset OS login requirement
+gcloud org-policies reset constraints/compute.requireOsLogin --project=${PROJECT_ID}
 
-cat > os_login.yaml << ENDOFFILE
-name: projects/${PROJECT_ID}/policies/compute.requireOsLogin
-spec:
-  rules:
-  - enforce: true
-ENDOFFILE
+# Reset disable serial port logging 
+gcloud org-policies reset constraints/compute.disableSerialPortLogging --project=${PROJECT_ID}
 
-gcloud org-policies set-policy os_login.yaml 
+# Reset shielded VM requirement
+gcloud org-policies reset constraints/compute.requireShieldedVm --project=${PROJECT_ID}
 
-rm os_login.yaml
+# Reset VM can IP forward
+gcloud org-policies reset constraints/compute.vmCanIpForward --project=${PROJECT_ID}
 
-# Enable Serial Port Logging
-rm enableSerialPortLogging.yaml
+# Reset VM external access
+gcloud org-policies reset constraints/compute.vmExternalIpAccess --project=${PROJECT_ID}
 
-cat > disableSerialPortLogging.yaml << ENDOFFILE
-name: projects/${PROJECT_ID}/policies/compute.disableSerialPortLogging
-spec:
-  rules:
-  - enforce: true
-ENDOFFILE
-
-gcloud org-policies set-policy disableSerialPortLogging.yaml 
-
-rm enableSerialPortLogging.yaml
-
-# Enable Shielded VM requirement
-rm shieldedVm.yaml 
-
-cat > shieldedVm.yaml << ENDOFFILE
-name: projects/${PROJECT_ID}/policies/compute.requireShieldedVm
-spec:
-  rules:
-  - enforce: true
-ENDOFFILE
-
-gcloud org-policies set-policy shieldedVm.yaml 
-
-rm shieldedVm.yaml 
-
-# Enable VM can IP forward requirement
-rm vmCanIpForward.yaml
-
-cat > vmCanIpForward.yaml << ENDOFFILE
-name: projects/${PROJECT_ID}/policies/compute.vmCanIpForward
-spec:
-  rules:
-  - allowAll: false
-ENDOFFILE
-
-gcloud org-policies set-policy vmCanIpForward.yaml
-
-rm vmCanIpForward.yaml
-
-# Disable VM external access
-rm vmExternalIpAccess.yaml
-
-cat > vmExternalIpAccess.yaml << ENDOFFILE
-name: projects/${PROJECT_ID}/policies/compute.vmExternalIpAccess
-spec:
-  rules:
-  - allValues: deny
-ENDOFFILE
-
-gcloud org-policies set-policy vmExternalIpAccess.yaml
-
-rm vmExternalIpAccess.yaml
-
-# Disable restrict VPC peering
-rm restrictVpcPeering.yaml
-
-cat > restrictVpcPeering.yaml << ENDOFFILE
-name: projects/${PROJECT_ID}/policies/compute.restrictVpcPeering
-spec:
-  rules:
-  - allowAll: false
-ENDOFFILE
-
-gcloud org-policies set-policy restrictVpcPeering.yaml
-
-rm restrictVpcPeering.yaml
-
-# Configure ingress settings for Cloud Functions
-rm gcf-ingress-settings.yaml
-
-cat > gcf-ingress-settings.yaml << ENDOFFILE
-name: projects/${PROJECT_ID}/policies/cloudfunctions.allowedIngressSettings
-spec:
-  etag: CO2D6o4GEKDk1wU=
-  rules:
-  - allowAll: false
-ENDOFFILE
-
-gcloud org-policies set-policy gcf-ingress-settings.yaml
-
-rm gcf-ingress-settings.yaml
+# Rest restrict VPC peering
+gcloud org-policies reset constraints/compute.restrictVpcPeering --project=${PROJECT_ID}
 
 # Remove other Cloud Storage Buckets created by cloud builds and cortex deployment
 read -e -i ${PROJECT_ID}-dags -p "Enter name of the GCS Bucket for Airflow DAGs [default: ${PROJECT_ID}-dags]: " DAGS_BUCKET
@@ -187,8 +105,12 @@ gsutil rm -r gs://${APP_BUCKET}
 echo 'Deleting GCS bucket for all cloud build logs...'
 gsutil rm -r gs://${PROJECT_ID}_cloudbuild
 
-# @TODO
 # Remove firewalls
+echo 'Deleting firewall: allow-all-intra-vpc'
+gcloud compute firewall-rules delete allow-all-intra-vpc
+
+echo 'Deleting firewall: allow-all-intra-vpc'
+gcloud compute firewall-rules delete allow-all-ssh
 
 # Remove VPC Network
 read -e -i "demo" -p "Enter VPC network [default: demo]: " VPC_NM
