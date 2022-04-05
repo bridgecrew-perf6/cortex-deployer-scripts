@@ -53,4 +53,4 @@ sh unDeployCortexFoundationE2E.sh
 ### Exercise 1: Deploy Cloud Composer instance
 ### Exercise 2: Deploy BigQuery Datasets
 ### Exercise 3: Deploy Cortex Foundation
-### Exercise 4: Deploy Cortex Solution
+### Exercise 5: Deploy Cortex Solution
