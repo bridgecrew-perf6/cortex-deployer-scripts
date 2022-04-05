@@ -33,7 +33,7 @@ ADMIN_FQ_UPN=$(gcloud auth list --filter=status:ACTIVE --format="value(account)"
 VPC_NM="demo"
 VPC_FQN=projects/${PROJECT_ID}/global/networks/$VPC_NM
 SUBNET_NM=${VPC_NM}-subnet
-COMPOSER_ENV_NM=$PROJECT_ID-cortex
+COMPOSER_ENV_NM=${PROJECT_ID}-cortex
 
 HOME=$(dirname $(pwd))
 
@@ -96,7 +96,8 @@ gcloud compute firewall-rules create -q allow-all-ssh \
     --action=ALLOW \
     --rules=tcp:22
 
-# Argolis specific: Relax require OS Login
+# 1##########################################################################
+# Relax require OS Login
 rm os_login.yaml
 
 cat > os_login.yaml << ENDOFFILE
@@ -109,8 +110,8 @@ ENDOFFILE
 gcloud org-policies set-policy os_login.yaml 
 
 rm os_login.yaml
-
-# Argolis specific: Disable Serial Port Logging
+# 2##########################################################################
+# Disable Serial Port Logging
 rm disableSerialPortLogging.yaml
 
 cat > disableSerialPortLogging.yaml << ENDOFFILE
@@ -124,7 +125,8 @@ gcloud org-policies set-policy disableSerialPortLogging.yaml
 
 rm disableSerialPortLogging.yaml
 
-# Argolis Specific: Disable Shielded VM requirement
+# 3##########################################################################
+# Disable Shielded VM requirement
 rm shieldedVm.yaml 
 
 cat > shieldedVm.yaml << ENDOFFILE
@@ -138,7 +140,8 @@ gcloud org-policies set-policy shieldedVm.yaml
 
 rm shieldedVm.yaml 
 
-# Argolis Specific: Disable VM can IP forward requirement
+# 4##########################################################################
+# Disable VM can IP forward requirement
 rm vmCanIpForward.yaml
 
 cat > vmCanIpForward.yaml << ENDOFFILE
@@ -152,7 +155,8 @@ gcloud org-policies set-policy vmCanIpForward.yaml
 
 rm vmCanIpForward.yaml
 
-# Argolis Specific: Enable VM external access
+# 5##########################################################################
+# Enable VM external access
 rm vmExternalIpAccess.yaml
 
 cat > vmExternalIpAccess.yaml << ENDOFFILE
@@ -166,7 +170,8 @@ gcloud org-policies set-policy vmExternalIpAccess.yaml
 
 rm vmExternalIpAccess.yaml
 
-# Argolis Specific: Enable restrict VPC peering
+# 6##########################################################################
+# Enable restrict VPC peering
 rm restrictVpcPeering.yaml
 
 cat > restrictVpcPeering.yaml << ENDOFFILE

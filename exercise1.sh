@@ -59,6 +59,10 @@ gcloud compute networks create -q ${VPC_NM} \
     --subnet-mode=custom \
     --mtu=1460 \
     --bgp-routing-mode=regional
+if [ $? -ne 0 ]; then
+    echo "Error -- Failed to create network ${VPC_NM} in project ${PROJECT_ID}"
+    exit 1
+else
 
 # Create custom subnet
 gcloud compute networks subnets create -q ${SUBNET_NM} \
@@ -66,6 +70,10 @@ gcloud compute networks subnets create -q ${SUBNET_NM} \
     --network=${VPC_NM} \
     --range=10.0.0.0/24 \
     --region=${REGION}
+if [ $? -ne 0 ]; then
+    echo "Error -- Failed to create subnet ${SUBNET_NM} for network ${VPC_NM} in project ${PROJECT_ID}"
+    exit 1
+else
 
 # Create firewall: Intra-VPC allow all communication
 gcloud compute firewall-rules create -q allow-all-intra-vpc \
@@ -186,14 +194,14 @@ for role in 'roles/composer.admin' 'roles/iam.serviceAccountTokenCreator' 'roles
 done
 
 # Grant roles for user to operate as service account
-for role in 'roles/iam.serviceAccountUser' 'roles/iam.serviceAccountTokenCreator' 'roles/composer.worker' 'roles/storage.objectViewer' 'roles/iam.serviceAccountUser' ; do
+for role in 'roles/iam.serviceAccountUser' 'roles/iam.serviceAccountTokenCreator' 'roles/iam.serviceAccountUser' ; do
     gcloud iam service-accounts add-iam-policy-binding -q ${UMSA_FQN} \
         --member="user:${ADMIN_FQ_UPN}" \
         --role="$role"
 done
 
 # Grant roles for user account too
-for role in 'roles/composer.admin' 'roles/composer.environmentAndStorageObjectViewer' ; do
+for role in 'roles/composer.admin' 'roles/composer.worker' 'roles/storage.objectViewer' 'roles/composer.environmentAndStorageObjectViewer' ; do
     gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
         --member=user:${ADMIN_FQ_UPN} \
         --role="$role"
@@ -207,5 +215,4 @@ gcloud composer environments create ${COMPOSER_ENV_NM} \
     --subnetwork ${SUBNET_NM} \
     --service-account ${UMSA_FQN}
 
-echo "\nSuccessfully triggered deployment of new cloud composer environment. Please cehck environment creation logs \n"
 exit 0

@@ -26,10 +26,6 @@ PROJECT_NUMBER=$(gcloud projects list --filter="${PROJECT_ID}" --format="value(P
 CBSA_FQN=${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com
 ADMIN_FQ_UPN=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
 
-DS_CDC=CDC_PROCESSED
-DS_MODELS=MODELS
-DS_REPORTING=REPORTING
-
 HOME=$(pwd)
 
 # Remove BigQuery Datasets
@@ -48,7 +44,7 @@ bq rm -r -f -d ${PROJECT_ID}:${DS_REPORTING}
 read -e -i "us-central1" -p "Enter google cloud region used for cortex-deployment[default: us-central1]: " REGION
 
 # Prepare to delete cloud composer instance
-read -e -i ${PROJECT_ID}-cortex -p "Enter Cloud Composer environment name [default: ${PROJECT_ID}-cortex]" COMPOSER_ENV_NM
+read -e -i ${PROJECT_ID}-cortex -p "Enter Cloud Composer environment name [default: ${PROJECT_ID}-cortex]: " COMPOSER_ENV_NM
 
 # Extract the bucket name generated during composer environment creation BEFORE deleting it!
 COMPOSER_GEN_BUCKET_FQN=$(gcloud composer environments describe ${COMPOSER_ENV_NM} --location=${REGION} --format='value(config.dagGcsPrefix)')
@@ -140,7 +136,7 @@ cat > vmExternalIpAccess.yaml << ENDOFFILE
 name: projects/${PROJECT_ID}/policies/compute.vmExternalIpAccess
 spec:
   rules:
-  - allowAll: false
+  - allValues: deny
 ENDOFFILE
 
 gcloud org-policies set-policy vmExternalIpAccess.yaml
@@ -190,6 +186,9 @@ gsutil rm -r gs://${APP_BUCKET}
 
 echo 'Deleting GCS bucket for all cloud build logs...'
 gsutil rm -r gs://${PROJECT_ID}_cloudbuild
+
+# @TODO
+# Remove firewalls
 
 # Remove VPC Network
 read -e -i "demo" -p "Enter VPC network [default: demo]: " VPC_NM
