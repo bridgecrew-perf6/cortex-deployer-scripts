@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 # Check and set configured project (default = current)
 read -e -i $(gcloud config get-value project) -p "Enter project id: " PROJECT_ID
 gcloud config set project ${PROJECT_ID}
