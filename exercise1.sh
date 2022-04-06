@@ -187,11 +187,11 @@ gcloud iam service-accounts create -q ${UMSA} \
     --display-name=$UMSA 
 
 # Grant roles to user managed service account
-for role in 'roles/composer.admin' \
+for role in 'roles/iam.serviceAccountUser' \
             'roles/iam.serviceAccountTokenCreator' \
             'roles/composer.worker' \
-            'roles/storage.objectViewer' \
-            'roles/iam.serviceAccountUser' ; do
+            'roles/composer.admin' \
+            'roles/storage.objectViewer' ; do
     gcloud projects add-iam-policy-binding $PROJECT_ID \
         --member="serviceAccount:${UMSA_FQN}" \
         --role="$role"
@@ -199,8 +199,7 @@ done
 
 # Grant roles for user to operate as service account
 for role in 'roles/iam.serviceAccountUser' \
-            'roles/iam.serviceAccountTokenCreator' \
-            'roles/iam.serviceAccountUser' ; do
+            'roles/iam.serviceAccountTokenCreator' ; do
     gcloud iam service-accounts add-iam-policy-binding -q ${UMSA_FQN} \
         --member="user:${ADMIN_FQ_UPN}" \
         --role="$role"
