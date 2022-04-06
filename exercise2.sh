@@ -24,7 +24,7 @@ PROJECT_NUMBER=$(gcloud projects list --filter="${PROJECT_ID}" --format="value(P
 read -e -i "us-central1" -p "Enter google cloud region for GCS buckets [default: us-central1]: " REGION
 #  @TODO: Currently only US works!
 read -e -i "us" -p "Enter google cloud region for BQ datasets [default: us]: " BQ_REGION
-read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-deployer-sa]" UMSA
+read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-deployer-sa]: " UMSA
 
 UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
 CBSA_FQN=${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com
