@@ -186,21 +186,32 @@ gcloud org-policies set-policy restrictVpcPeering.yaml
 rm restrictVpcPeering.yaml
 
 # Grant roles to user managed service account for Cloud Composer and BigQuery tasks
-for role in 'roles/composer.admin' 'roles/iam.serviceAccountTokenCreator' 'roles/composer.worker' 'roles/storage.objectViewer' 'roles/iam.serviceAccountUser' 'roles/bigquery.admin' 'roles/bigquery.dataEditor' 'roles/cloudbuild.builds.editor' ; do
+for role in 'roles/composer.admin' \
+            'roles/composer.worker' \
+            'roles/iam.serviceAccountUser' \
+            'roles/iam.serviceAccountTokenCreator' \
+            'roles/storage.objectViewer' \
+            'roles/bigquery.admin' \
+            'roles/bigquery.dataEditor' \
+            'roles/cloudbuild.builds.editor' ; do \
     gcloud projects add-iam-policy-binding $PROJECT_ID \
         --member="serviceAccount:${UMSA_FQN}" \
         --role="$role"
 done
 
 # Grant roles for user to operate as service account
-for role in 'roles/iam.serviceAccountUser' 'roles/iam.serviceAccountTokenCreator' 'roles/composer.worker' 'roles/storage.objectViewer' 'roles/iam.serviceAccountUser' ; do
+for role in 'roles/iam.serviceAccountUser' \
+            'roles/iam.serviceAccountTokenCreator' \
+            'roles/composer.worker' \
+            'roles/storage.objectViewer' ; do \
     gcloud iam service-accounts add-iam-policy-binding -q ${UMSA_FQN} \
         --member="user:${ADMIN_FQ_UPN}" \
         --role="$role"
 done
 
 # Grant roles for user account too
-for role in 'roles/composer.admin' 'roles/composer.environmentAndStorageObjectViewer' ; do
+for role in 'roles/composer.admin' \
+            'roles/composer.environmentAndStorageObjectViewer' ; do \
     gcloud projects add-iam-policy-binding -q ${PROJECT_ID} \
         --member=user:${ADMIN_FQ_UPN} \
         --role="$role"
