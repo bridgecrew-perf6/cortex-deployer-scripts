@@ -148,13 +148,11 @@ gcloud iam service-accounts delete -q ${UMSAD_FQN}
 
 # Disbale APIs
 gcloud services disable --force \
-    bigquery.googleapis.com \
     cloudbuild.googleapis.com \
     composer.googleapis.com \
     storage-component.googleapis.com \
     cloudresourcemanager.googleapis.com \
     orgpolicy.googleapis.com \
-    compute.googleapis.com \
     monitoring.googleapis.com \
     cloudtrace.googleapis.com \
     clouddebugger.googleapis.com \
