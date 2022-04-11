@@ -112,8 +112,12 @@ gcloud compute firewall-rules delete allow-all-intra-vpc
 echo 'Deleting firewall: allow-all-intra-vpc'
 gcloud compute firewall-rules delete allow-all-ssh
 
-# Remove VPC Network
+# Remove subnet
 read -e -i "demo" -p "Enter VPC network [default: demo]: " VPC_NM
+read -e -i ${VPC_NM}-subnet -p "Enter subnet [default: ${VPC_NM}-subnet]: " ${VPC_NM}-subnet
+gcloud compute networks subnets delete ${VPC_NM}-subnet --region=${REGION}
+
+# Remove VPC Network
 gcloud compute networks delete ${VPC_NM}
 
 # Remove roles for cloud build
