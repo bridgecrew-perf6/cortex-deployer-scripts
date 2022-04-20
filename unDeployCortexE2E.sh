@@ -133,9 +133,9 @@ gcloud projects add-iam-policy-binding ${PROJECT_ID} \
     --role:"roles/iam.serviceAccountKeyAdmin"
 
 # Remove User Managed Service Account (UMSA)
-read -e -i "cortex-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-deployer-sa]: " UMSA
-read -e -i "cortex-app-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-app-deployer-sa]: " UMSAD
-read -e -i "cortex-app-runner-sa" -p "Enter service account identifier for running app [default: cortex-app-runner-sa]: " UMSAR
+read -e -i "cortex-fdn-deployer" -p "Enter service account identifier for deployment [default: cortex-fdn-deployer]: " UMSA
+read -e -i "cortex-app-deployer" -p "Enter service account identifier for deployment [default: cortex-app-deployer]: " UMSAD
+read -e -i "cortex-app-runner" -p "Enter service account identifier for running app [default: cortex-app-runner]: " UMSAR
 
 UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
 UMSAD_FQN=$UMSAD@${PROJECT_ID}.iam.gserviceaccount.com
