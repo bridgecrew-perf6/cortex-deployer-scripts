@@ -66,7 +66,11 @@ gsutil rm -r gs://${COMPOSER_GEN_BUCKET_NAME}
 # Remove all the persistent disks that were previously used by  the removed cloud composer instance
 for ZONE in $(gcloud compute disks list --format='value(zone.basename())' | sort | uniq) ; do
     gcloud config set compute/zone ${ZONE}
-    # Remove any compute instances left over by a unclean uninstal of composer environment
+    # Remove any compute instances left over that might be using remaining disks
+    # Remove clusters, if left-ver by unclean composer uninstall
+    for CLUSTER in $(gcloud container clusters list --format="value(name)") ; do
+        gcloud container clusters delete ${CLUSTER}
+    done
     for INSTANCE in $(gcloud compute instances list --zones=${ZONE} --format="value(name)") ; do
         echo 'Removing compute instances left by Cloud Composer installation: '${COMPOSER_ENV_NM}
         gcloud compute instances delete ${INSTANCE}
@@ -142,13 +146,8 @@ UMSA_FQN=$UMSA@${PROJECT_ID}.iam.gserviceaccount.com
 UMSAD_FQN=$UMSAD@${PROJECT_ID}.iam.gserviceaccount.com
 UMSAR_FQN=$UMSAR@${PROJECT_ID}.iam.gserviceaccount.com
 
-gcloud auth revoke ${UMSA_FQN}
 gcloud iam service-accounts delete -q ${UMSA_FQN}
-
-gcloud auth revoke ${UMSAD_FQN}
 gcloud iam service-accounts delete -q ${UMSAD_FQN}
-
-gcloud auth revoke ${UMSAD_FQN}
 gcloud iam service-accounts delete -q ${UMSAD_FQN}
 
 # Disbale APIs
