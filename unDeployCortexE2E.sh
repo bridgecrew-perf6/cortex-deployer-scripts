@@ -68,6 +68,7 @@ for ZONE in $(gcloud compute disks list --format='value(zone.basename())' | sort
     gcloud config set compute/zone ${ZONE}
     # Remove any compute instances left over by a unclean uninstal of composer environment
     for INSTANCE in $(gcloud compute instances list --zones=${ZONE} --format="value(name)") ; do
+        echo 'Removing compute instances left by Cloud Composer installation: '${COMPOSER_ENV_NM}
         gcloud compute instances delete ${INSTANCE}
     done    
     echo 'Removing disks left by Cloud Composer installation: '${COMPOSER_ENV_NM}
