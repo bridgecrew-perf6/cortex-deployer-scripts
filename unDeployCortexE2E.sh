@@ -64,10 +64,12 @@ echo 'Removing bucket created by Cloud Composer installation: '${COMPOSER_GEN_BU
 gsutil rm -r gs://${COMPOSER_GEN_BUCKET_NAME}
 
 # Remove all the persistent disks that were previously used by  the removed cloud composer instance
-for ZONE_LONG in $(gcloud compute disks list --format='value(ZONE)' | sort | uniq)
-do
-    ZONE=$(echo ${ZONE_LONG} | cut -d'/' -f 9)
+for ZONE in $(gcloud compute disks list --format='value(zone.basename())' | sort | uniq) ; do
     gcloud config set compute/zone ${ZONE}
+    # Remove any compute instances left over by a unclean uninstal of composer environment
+    for INSTANCE in $(gcloud compute instances list --zones=${ZONE} --format="value(name)") ; do
+        gcloud compute instances delete ${INSTANCE}
+    done    
     echo 'Removing disks left by Cloud Composer installation: '${COMPOSER_ENV_NM}
     gcloud compute disks delete -q $(gcloud compute disks list --filter="zone=${ZONE} AND -users:*" --format "value(name)")
 done
@@ -105,21 +107,15 @@ gsutil rm -r gs://${APP_BUCKET}
 echo 'Deleting GCS bucket for all cloud build logs...'
 gsutil rm -r gs://${PROJECT_ID}_cloudbuild
 
-# # Remove firewalls
-# echo 'Deleting firewall: allow-all-intra-vpc'
-# gcloud compute firewall-rules delete allow-all-intra-vpc
-
-# echo 'Deleting firewall: allow-ssh'
-# gcloud compute firewall-rules delete allow-ssh
-# FW_RULES=$(gcloud compute firewall-rules list --format="value(name)")
+# Remove firewalls
 for rule in $(gcloud compute firewall-rules list --format="value(name)") ; do
     gcloud compute firewall-rules delete $rule
 done
 
 # Remove subnet
 read -e -i "demo" -p "Enter VPC network [default: demo]: " VPC_NM
-read -e -i ${VPC_NM}-subnet -p "Enter subnet [default: ${VPC_NM}-subnet]: " ${VPC_NM}-subnet
-gcloud compute networks subnets delete ${VPC_NM}-subnet --region=${REGION}
+read -e -i "${REGION}" -p "Enter subnet [default: ${REGION}]: " VPC_SUBNET
+gcloud compute networks subnets delete ${VPC_SUBNET} --region=${REGION}
 
 # Remove VPC Network
 gcloud compute networks delete ${VPC_NM}
