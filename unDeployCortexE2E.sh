@@ -105,12 +105,16 @@ gsutil rm -r gs://${APP_BUCKET}
 echo 'Deleting GCS bucket for all cloud build logs...'
 gsutil rm -r gs://${PROJECT_ID}_cloudbuild
 
-# Remove firewalls
-echo 'Deleting firewall: allow-all-intra-vpc'
-gcloud compute firewall-rules delete allow-all-intra-vpc
+# # Remove firewalls
+# echo 'Deleting firewall: allow-all-intra-vpc'
+# gcloud compute firewall-rules delete allow-all-intra-vpc
 
-echo 'Deleting firewall: allow-all-intra-vpc'
-gcloud compute firewall-rules delete allow-all-ssh
+# echo 'Deleting firewall: allow-ssh'
+# gcloud compute firewall-rules delete allow-ssh
+# FW_RULES=$(gcloud compute firewall-rules list --format="value(name)")
+for rule in $(gcloud compute firewall-rules list --format="value(name)") ; do
+    gcloud compute firewall-rules delete $rule
+done
 
 # Remove subnet
 read -e -i "demo" -p "Enter VPC network [default: demo]: " VPC_NM
@@ -122,9 +126,9 @@ gcloud compute networks delete ${VPC_NM}
 
 # Remove roles for cloud build
 for role in 'roles/bigquery.dataEditor' 'roles/bigquery.jobUser' 'roles/storage.objectAdmin' ; do
-gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
-    --member=serviceAccount:${CBSA_FQN} \
-    --role="$role"
+    gcloud projects remove-iam-policy-binding ${PROJECT_ID} \
+        --member=serviceAccount:${CBSA_FQN} \
+        --role="$role"
 done
 
 # Grant logged in user permission to remove service accounts
