@@ -220,6 +220,9 @@ sh exercise5.sh
 
 Follow the instructions on the terminal. Keep pressing entering to input default values as proposed
 
+This script will do the following:
+- 
+
 ## End-to-End Deployment
 Run the script for End-to-End deployment
 

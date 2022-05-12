@@ -24,6 +24,8 @@ PROJECT_NUMBER=$(gcloud projects list --filter="${PROJECT_ID}" --format="value(P
 read -e -i "us-central1" -p "Enter google cloud region [default: us-central1]: " REGION
 #  @TODO: Currently only US works!
 read -e -i "us" -p "Enter google cloud region for BQ datasets [default: us]: " LOCATION
+read -e -i "demo" -p "Enter VPC name for deployment [default: demo]: " VPC_NM
+
 read -e -i "cortex-app-deployer-sa" -p "Enter service account identifier for deployment [default: cortex-app-deployer-sa]: " UMSAD
 read -e -i "cortex-app-runner-sa" -p "Enter service account identifier for running app [default: cortex-app-runner-sa]: " UMSAR
 read -e -i ${PROJECT_ID}-cortex-app -p "Enter GCS Bucket identifier for deployment [default: ${PROJECT_ID}-cortex-app]: " APP_BUCKET
