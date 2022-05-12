@@ -44,6 +44,9 @@ git clone --recurse-submodules https://github.com/GoogleCloudPlatform/cortex-dat
 # Change to cloned repo folder
 cd cortex-data-foundation
 
+# Replace the BigQuery Connection name for the DAGs to be generated:
+sed -i'' -e 's/sap_cdc_bq/bigquery_default/g' src/SAP_CDC/src/template_dag/dag_sql.py
+
 # Run cloud build
 gcloud builds submit --project ${PROJECT_ID} \
     --substitutions \
