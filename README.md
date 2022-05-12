@@ -129,7 +129,8 @@ If you do not see your Project ID in the command prompt, or if you are in wrong 
 gcloud config set project <PROJECT_ID>
 ```
 
-3. Clone this repo into your Cloud Shell home folder
+### Clone scripts repo and set folder
+Clone this repo into your Cloud Shell home folder
 
 ```shell
 git clone https://github.com/ssdramesh/cortex-deployer-scripts
@@ -140,7 +141,10 @@ Change into the cloned repository folder
 cd cortex-deployer-scripts
 ```
 
-## Exercise 1: Create a Cloud Composer environment
+## Exercise 1 Create a Cloud Composer environment
+
+If your Cloud Shell died due to a timeout (could happen during the Tech Worshop due to the time taken for each module), execute the [preparation steps](#Preparation-Steps) again.  it is important that you are properly [authorized](#Authorization), working in the right [project](#Set-Project) and are in the correct [folder](#Clone-scripts-repo-and-set-folder), before you start the exercise.  Otherwise you may get errors in script execution.
+
 Run the script:
 
 ```shell
@@ -176,7 +180,9 @@ You will anyway do this at the end of exercise 3, when you need to copy the DAGH
 
 Additional Info: [Creating Environments | Cloud Composer | Google Cloud][Create Environments]
 
-## Exercise 2: 
+## Exercise 2 Setup BigQuery for Cortex Deployment
+If your Cloud Shell died due to a timeout (could happen during the Tech Worshop due to the time taken for each module), execute the [preparation steps](#Preparation-Steps) again.  it is important that you are properly [authorized](#Authorization), working in the right [project](#Set-Project) and are in the correct [folder](#Clone-scripts-repo-and-set-folder), before you start the exercise.  Otherwise you may get errors in script execution.
+
 Run the script for exercise 2
 
 sh exercise2.sh
@@ -191,43 +197,44 @@ This script will do the following:
 - Create Google Cloud Storage (GCS) buckets required for storing Airflow DAGs and logs during the deployment of Cortex Data Foundation
 - Check all the prerequisites for the deployment of Cortex data Foundation
 
+## Exercise 3 Deploy Cortex Data Foundation
+If your Cloud Shell died due to a timeout (could happen during the Tech Worshop due to the time taken for each module), execute the [preparation steps](#Preparation-Steps) again.  it is important that you are properly [authorized](#Authorization), working in the right [project](#Set-Project) and are in the correct [folder](#Clone-scripts-repo-and-set-folder), before you start the exercise.  Otherwise you may get errors in script execution.
+
+Run the script for exercise 3
+
+```shell
+sh exercise3.sh
+```
+Follow the instructions on the terminal. Keep pressing entering to input default values as proposed
+
+This script will do the following:
+- Clone the open source repository [Github][Cortex Data Foundation Repo] for the automated deployment of Cortex Data Foundation
+- Replace the BigQuery connection ID for Airflow with the default connection ID created in [Exercise 1](#Exercise-1-Create-a-Cloud-Composer-environment) section
+
+## Exercise 5: Configure project for Cortex Application Layer - sample application deployment
+If your Cloud Shell died due to a timeout (could happen during the Tech Worshop due to the time taken for each module), execute the [preparation steps](#Preparation-Steps) again.  it is important that you are properly [authorized](#Authorization), working in the right [project](#Set-Project) and are in the correct [folder](#Clone-scripts-repo-and-set-folder), before you start the exercise.  Otherwise you may get errors in script execution.
+
+Run the script for exercise 5
+
+sh exercise5.sh
+
+Follow the instructions on the terminal. Keep pressing entering to input default values as proposed
+
 ## End-to-End Deployment
-### What will happen in end-to-end deployment?
-1. All required APIs will be enabled
-2. A VPC for the will be created with the name ```demo```, with a subnet in ```us-central1``` named ```us-central1```
-3. A User Managed Service Account (UMSA) will be created for Cortex deployment.  Required permissions for Cloud Composer and BigQuery tasks will be granted
-4. Cloud Build Service Account (CBSA) will be given BQ permissions required during data foundation build
-5. SA Impersonation for the logged in account will be granted
-6. Composer environment will be created
-7. Foundation BigQuery datasets required for cortex deployment will be created in US
-8. Cortex Data Foundation deployment preflight checker will be run
-9. Cortex Deployment will be run with test harness and CDC DAG creation
-10. DAGs will be copied to composer Composer buckets
-11. Pub/Sub will be configured in preparaton of Cortex App Layer deployment from market place
-12. Container cluster will be created in preparaton of Cortex App Layer deployment from market place
-13. Workload Identity will be configured for the deployer service account in preparaton of Cortex App Layer deployment from market place
+Run the script for End-to-End deployment
 
-## Instructions for step-by-step deployment (Workshop / Labs mode)
-The scripts named as ```exercise*.sh``` can be used as tech workshop (fast track option)
+Run the script for End-to-End Undeployment
+```shell
+sh deployCortexE2E.sh
+```
 
-### Exercise 1: Deploy Cloud Composer instance
-Contains all the steps required to create a Cloud Composer instance for CDC DAGs functionality of Cortex Data Foundation
+## End-to-End "Un"deployment
+Run the script for End-to-End Undeployment
 
-### Exercise 2: Deploy BigQuery Datasets
-Prepares a new project environment for the deployment of Cortex data Foundation.  Runs a "checker-build" to check the readiness of the Google Cloud project for the deployment of Cortex Data Foundation
-
-### Exercise 3: Deploy Cortex Foundation
-Submits the cloud build that triggers the actual deployment of all the artifacts of the Cortex Data Foundation
-
-### Exercise 5: Configure project for Cortex Application Layer - sample application deployment
-Runs all the steps required to configure the Google Cloud project to prepare for Cortex Application Layer - sample application deployment (via Google Cloud Marketplace) 
-
-## Instructions for end-to-end "un"deployment of cortex
-A helper script to rest your Googel Cloud project to initial state (CAUTION: Work-In-Progress, you might still need to execute some manual clean-up)
-1. Run required script in Terminal
 ```shell
 sh unDeployCortexE2E.sh
 ```
 
 [Cloud Console]: https://console.cloud.googlee.com
 [Create Environments]: https://cloud.google.com/composer/docs/how-to/managing/creating?hl=en
+[Cortex Data Foundation Repo]: https://github.com/GoogleCloudPlatform/cortex-data-foundation
