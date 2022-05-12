@@ -75,6 +75,10 @@ gcloud projects add-iam-policy-binding {PROJECT_ID} \
 # Create Cluster
 # this creates a very bare-minimum cluster with all defaults
 gcloud container clusters create cortex \
+    --region=${REGION} \
+    --machine-type=e2-standard-4 \
+    --network=${VPC_NM} \
+    --subnetwork=${VPC_NM}-subnet \
     --workload-pool=$PROJECT_ID.svc.id.goog
 
 # Configure Workload Identity for your target namespace for the deployer service account. The Kubernetes SA name is `cortex-apployer-bot`.
