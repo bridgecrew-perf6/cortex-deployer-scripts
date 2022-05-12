@@ -177,7 +177,19 @@ You will anyway do this at the end of exercise 3, when you need to copy the DAGH
 Additional Info: [Creating Environments | Cloud Composer | Google Cloud][Create Environments]
 
 ## Exercise 2: 
+Run the script for exercise 2
 
+sh exercise2.sh
+
+Follow the instructions on the terminal. Keep pressing entering to input default values as proposed
+
+This script will do the following:
+- Enable all required APIs for this exercise (BigQuery API)
+- Grant BigQuery roles to the User Managed Service Account (UMSA) required for the deployment of Cortex Data Foundation
+- Grant BigQuery roles to the Cloud Build Service Account (CBSA) required by Cloud Build to run the automated deployment of Cortex Data Foundation
+- Create the datasets in your BigQuery Dataset required for deployment of Cortex Data Foundation
+- Create Google Cloud Storage (GCS) buckets required for storing Airflow DAGs and logs during the deployment of Cortex Data Foundation
+- Check all the prerequisites for the deployment of Cortex data Foundation
 
 ## End-to-End Deployment
 ### What will happen in end-to-end deployment?
