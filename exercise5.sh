@@ -66,7 +66,7 @@ for role in 'roles/run.invoker' 'roles/cloudscheduler.admin' 'roles/bigquery.dat
 done
 
 # Configure Pub / Sub
-gcloud projects add-iam-policy-binding {PROJECT_ID} \
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
      --member=serviceAccount:service-${PSSA_FQN} \
      --role=roles/iam.serviceAccountTokenCreator
 
