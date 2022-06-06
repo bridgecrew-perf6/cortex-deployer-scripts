@@ -223,21 +223,6 @@ Follow the instructions on the terminal. Keep pressing entering to input default
 This script will do the following:
 - 
 
-## End-to-End Deployment
-Run the script for End-to-End deployment
-
-Run the script for End-to-End Undeployment
-```shell
-sh deployCortexE2E.sh
-```
-
-## End-to-End "Un"deployment
-Run the script for End-to-End Undeployment
-
-```shell
-sh unDeployCortexE2E.sh
-```
-
 [Cloud Console]: https://console.cloud.googlee.com
 [Create Environments]: https://cloud.google.com/composer/docs/how-to/managing/creating?hl=en
 [Cortex Data Foundation Repo]: https://github.com/GoogleCloudPlatform/cortex-data-foundation
